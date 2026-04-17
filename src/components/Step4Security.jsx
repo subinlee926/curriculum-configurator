@@ -17,6 +17,7 @@ const TAG_COLORS = {
   '제한적접속': { bg: '#f0fdf4', color: '#14532d', border: '#86efac' },
   '파일업로드제한': { bg: '#fff7ed', color: '#7c2d12', border: '#fed7aa' },
   '사내AI성능제한': { bg: '#fefce8', color: '#713f12', border: '#fde047' },
+  '특정도구차단': { bg: '#fef2f2', color: '#991b1b', border: '#fca5a5' },
 };
 
 function highlightText(text, matchedKeywords) {
@@ -75,10 +76,28 @@ export default function Step4Security({
       onTagsDetected([], []);
       return;
     }
+
+    // Preprocess: expand comma-separated negation patterns
+    // "구글, 노션 불가" → "구글 불가, 노션 불가"
+    // "ChatGPT, Claude 차단" → "ChatGPT 차단, Claude 차단"
+    const negationWords = ['불가', '차단', '금지', '제한', '미허용'];
+    let expandedText = text;
+    negationWords.forEach((neg) => {
+      const regex = new RegExp(
+        `([가-힣A-Za-z0-9]+(?:\\s*[,·/]\\s*[가-힣A-Za-z0-9]+)+)\\s+${neg}`,
+        'g'
+      );
+      expandedText = expandedText.replace(regex, (match, itemList) => {
+        const items = itemList.split(/\s*[,·/]\s*/);
+        return items.map((item) => `${item.trim()} ${neg}`).join(', ');
+      });
+    });
+
+    const searchText = expandedText.toLowerCase();
     const matched = [];
     const seenTags = new Set();
     securityKeywords.forEach((kw) => {
-      if (text.toLowerCase().includes(kw.키워드.toLowerCase())) {
+      if (searchText.includes(kw.키워드.toLowerCase())) {
         if (!seenTags.has(kw.태그)) {
           seenTags.add(kw.태그);
           matched.push(kw);
@@ -86,7 +105,7 @@ export default function Step4Security({
       }
     });
     const matchedKws = securityKeywords.filter((kw) =>
-      text.toLowerCase().includes(kw.키워드.toLowerCase())
+      searchText.includes(kw.키워드.toLowerCase())
     );
     onTagsDetected(matched, matchedKws);
   }, [onTagsDetected]);

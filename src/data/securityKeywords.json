@@ -571,21 +571,6 @@
     }
   },
   {
-    "키워드": "구글",
-    "태그": "Google환경",
-    "설명": "Google 생태계 사용 환경",
-    "효과": {
-      "제외Tool": [
-        "Copilot for M365",
-        "Power Automate"
-      ],
-      "대체Tool": [
-        "Gemini"
-      ],
-      "모듈조정": "Gemini 기반 실습으로 전환. Google 도구 연동 강화."
-    }
-  },
-  {
     "키워드": "파일 업로드 불가",
     "태그": "DLP적용",
     "설명": "AI 도구에 파일 업로드가 제한된 환경",
@@ -884,6 +869,121 @@
       "제외Tool": [],
       "대체Tool": [],
       "모듈조정": "AI 결과물 수동 검증·보완 단계 강화. 할루시네이션 대응 실습 비중 확대."
+    }
+  },
+  {
+    "키워드": "구글 불가",
+    "태그": "특정도구차단",
+    "설명": "Google 관련 도구 사용 불가 환경",
+    "효과": {
+      "제외Tool": [
+        "Gemini",
+        "NotebookLM",
+        "Google AI"
+      ],
+      "대체Tool": [
+        "ChatGPT",
+        "Claude",
+        "Copilot"
+      ],
+      "모듈조정": "Gemini·NotebookLM 실습을 ChatGPT/Claude로 전환."
+    }
+  },
+  {
+    "키워드": "Google 불가",
+    "태그": "특정도구차단",
+    "설명": "Google 관련 도구 사용 불가 환경",
+    "효과": {
+      "제외Tool": [
+        "Gemini",
+        "NotebookLM",
+        "Google AI"
+      ],
+      "대체Tool": [
+        "ChatGPT",
+        "Claude",
+        "Copilot"
+      ],
+      "모듈조정": "Gemini·NotebookLM 실습을 ChatGPT/Claude로 전환."
+    }
+  },
+  {
+    "키워드": "구글 사용 불가",
+    "태그": "특정도구차단",
+    "설명": "Google 서비스 사용 불가",
+    "효과": {
+      "제외Tool": [
+        "Gemini",
+        "NotebookLM",
+        "Google AI"
+      ],
+      "대체Tool": [
+        "ChatGPT",
+        "Claude",
+        "Copilot"
+      ],
+      "모듈조정": "Google 도구 실습을 대체 도구로 전환."
+    }
+  },
+  {
+    "키워드": "노션 불가",
+    "태그": "특정도구차단",
+    "설명": "Notion 사용 불가 환경",
+    "효과": {
+      "제외Tool": [
+        "Notion AI"
+      ],
+      "대체Tool": [
+        "ChatGPT",
+        "NotebookLM"
+      ],
+      "모듈조정": "Notion AI 실습을 ChatGPT/NotebookLM으로 전환."
+    }
+  },
+  {
+    "키워드": "Notion 불가",
+    "태그": "특정도구차단",
+    "설명": "Notion 사용 불가 환경",
+    "효과": {
+      "제외Tool": [
+        "Notion AI"
+      ],
+      "대체Tool": [
+        "ChatGPT",
+        "NotebookLM"
+      ],
+      "모듈조정": "Notion AI 실습을 대체 도구로 전환."
+    }
+  },
+  {
+    "키워드": "Perplexity 불가",
+    "태그": "특정도구차단",
+    "설명": "Perplexity 사용 불가 환경",
+    "효과": {
+      "제외Tool": [
+        "Perplexity"
+      ],
+      "대체Tool": [
+        "ChatGPT Deep Research",
+        "GenSpark"
+      ],
+      "모듈조정": "Perplexity 리서치 실습을 ChatGPT Deep Research로 전환."
+    }
+  },
+  {
+    "키워드": "Claude 불가",
+    "태그": "특정도구차단",
+    "설명": "Claude 사용 불가 환경",
+    "효과": {
+      "제외Tool": [
+        "Claude",
+        "Claude Code"
+      ],
+      "대체Tool": [
+        "ChatGPT",
+        "Cursor"
+      ],
+      "모듈조정": "Claude 실습을 ChatGPT로, Claude Code를 Cursor로 전환."
     }
   }
 ]
