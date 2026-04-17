@@ -1,0 +1,218 @@
+[
+  {
+    "모듈ID": "N1-M01",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Claude",
+    "변경점": "Claude의 Constitutional AI 원칙 및 안전성 설계 관점을 추가 설명. 모델 비교 시 Claude 특성 강조."
+  },
+  {
+    "모듈ID": "N1-M01",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Gemini",
+    "변경점": "Google 생태계 통합(Gmail, Docs, Drive) 연계 사례 중심으로 설명. 멀티모달 기능은 Gemini 기준으로 시연."
+  },
+  {
+    "모듈ID": "N1-M01",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "HyperCLOVA X",
+    "변경점": "한국어 특화 모델 특성 강조. 국내 기업 사례 중심, 네이버 클라우드 연동 내용 포함."
+  },
+  {
+    "모듈ID": "N1-M02",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Claude",
+    "변경점": "Claude의 긴 컨텍스트 윈도우 활용 프롬프트 전략 추가. XML 태그 활용 구조화 프롬프트 기법 포함."
+  },
+  {
+    "모듈ID": "N1-M02",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Copilot",
+    "변경점": "Microsoft 365 환경 내 Copilot 프롬프트 패턴 집중. Word/Excel/Teams 각 앱별 프롬프트 실습으로 변경."
+  },
+  {
+    "모듈ID": "N1-M03",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Copilot",
+    "변경점": "Word Copilot 기반 문서 생성으로 실습 환경 전환. M365 라이선스 환경 전제, Office 앱 내 실습 진행."
+  },
+  {
+    "모듈ID": "N1-M03",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Claude",
+    "변경점": "Claude API 또는 Claude.ai 기반 실습. 긴 문서 요약·분석 기능 강조, 구조화 출력 기법 적용."
+  },
+  {
+    "모듈ID": "N1-M04",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Copilot",
+    "변경점": "Excel Copilot 기능 중심으로 재구성. 수식 자동 제안, 피벗테이블 생성, 데이터 분석 인사이트 Copilot 기능 활용."
+  },
+  {
+    "모듈ID": "N1-M05",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Claude",
+    "변경점": "Claude 프로젝트 기능 활용 나만의 AI 어시스턴트 구성으로 대체. 시스템 프롬프트 설계 및 지식 파일 연동 실습."
+  },
+  {
+    "모듈ID": "N2A-M01",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Claude",
+    "변경점": "Claude의 Extended Thinking 모드를 활용한 Chain-of-Thought 구현. 긴 컨텍스트 활용 복잡한 분석 프롬프트 실습."
+  },
+  {
+    "모듈ID": "N2A-M02",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Claude",
+    "변경점": "다단계 프롬프트에서 Claude 도구 호출(Tool Use) 기능 활용. 구조화 출력(JSON/XML) 기반 업무 자동화 실습."
+  },
+  {
+    "모듈ID": "N2B-M01",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Copilot",
+    "변경점": "Word Copilot 기반 보고서 자동 생성으로 전환. SharePoint 연동 템플릿 관리 및 M365 협업 기능 포함."
+  },
+  {
+    "모듈ID": "N2B-M02",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Copilot",
+    "변경점": "M365 Copilot의 Word/PowerPoint 연계 문서 자동화로 재구성. 기존 사내 문서 양식과 Copilot 통합 실습."
+  },
+  {
+    "모듈ID": "N2C-M02",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Claude",
+    "변경점": "Claude의 코드 생성 능력 활용 Python 분석 스크립트 자동화. Artifacts 기능으로 코드 실행 및 검증 실습."
+  },
+  {
+    "모듈ID": "N2C-M03",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Gemini",
+    "변경점": "Google Looker Studio 연동 및 Google Sheets AI 기능 활용. Gemini Advanced의 데이터 분석 기능 중심."
+  },
+  {
+    "모듈ID": "N2D-M02",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Perplexity",
+    "변경점": "Perplexity AI의 실시간 웹 검색 및 인용 기능 중심으로 재구성. 정보 신뢰성 검증 및 출처 관리 실습 강화."
+  },
+  {
+    "모듈ID": "N3-M01",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Claude",
+    "변경점": "Claude를 활용한 전략 문서 분석 및 경쟁사 보고서 요약 실습 포함. 임원 의사결정 지원 시나리오 변경."
+  },
+  {
+    "모듈ID": "N4A-M01",
+    "기본Tool": "Midjourney",
+    "대체Tool": "DALL-E 3",
+    "변경점": "ChatGPT 내 DALL-E 3 통합 활용으로 접근성 강화. 이미지 생성과 텍스트 작업 동시 진행 실습."
+  },
+  {
+    "모듈ID": "N4A-M01",
+    "기본Tool": "Midjourney",
+    "대체Tool": "Adobe Firefly",
+    "변경점": "Adobe Creative Cloud 연동 기업용 워크플로우 중심. 상업적 안전성(학습 데이터 출처 보장) 강조."
+  },
+  {
+    "모듈ID": "N4A-M02",
+    "기본Tool": "Midjourney",
+    "대체Tool": "Adobe Firefly",
+    "변경점": "Adobe 브랜드 킷 연동으로 브랜드 일관성 자동화. Creative Cloud 에셋 라이브러리 활용 실습."
+  },
+  {
+    "모듈ID": "N4B-M01",
+    "기본Tool": "Runway",
+    "대체Tool": "Pika",
+    "변경점": "Pika Labs 기반 영상 생성 실습으로 변경. 텍스트/이미지-투-영상 워크플로우, 모션 컨트롤 실습."
+  },
+  {
+    "모듈ID": "N4B-M01",
+    "기본Tool": "Runway",
+    "대체Tool": "Sora",
+    "변경점": "OpenAI Sora API 활용 고품질 영상 생성. 프롬프트 기반 씬 연출 및 카메라 움직임 제어 실습."
+  },
+  {
+    "모듈ID": "N4C-M01",
+    "기본Tool": "Suno",
+    "대체Tool": "Udio",
+    "변경점": "Udio 기반 음악 생성 및 편집 실습으로 전환. 더 세밀한 장르/악기 컨트롤 및 마스터링 기능 활용."
+  },
+  {
+    "모듈ID": "N4D-M02",
+    "기본Tool": "Gamma",
+    "대체Tool": "Beautiful.ai",
+    "변경점": "Beautiful.ai의 자동 레이아웃 최적화 기능 중심. 팀 협업 및 브랜드 테마 자동 적용 실습."
+  },
+  {
+    "모듈ID": "N6-M01",
+    "기본Tool": "Copilot for M365",
+    "대체Tool": "Copilot for M365",
+    "변경점": "이 모듈은 M365 Copilot 전용입니다. 다른 도구로 대체되지 않습니다."
+  },
+  {
+    "모듈ID": "N6-M05",
+    "기본Tool": "Power Automate",
+    "대체Tool": "Power Automate",
+    "변경점": "Power Automate 전용 모듈. M365 환경 필수."
+  },
+  {
+    "모듈ID": "N8-M02",
+    "기본Tool": "Cursor",
+    "대체Tool": "GitHub Copilot",
+    "변경점": "GitHub Copilot 기반 IDE 내 코딩 실습으로 전환. VS Code 내 인라인 제안 및 Chat 기능 중심."
+  },
+  {
+    "모듈ID": "N8-M03",
+    "기본Tool": "Cursor",
+    "대체Tool": "GitHub Copilot",
+    "변경점": "GitHub Copilot + VS Code 기반 React 개발 실습. Copilot의 컴포넌트 생성 및 스타일 추천 기능 활용."
+  },
+  {
+    "모듈ID": "N8-M04",
+    "기본Tool": "Cursor",
+    "대체Tool": "Claude",
+    "변경점": "Claude API + LangChain 기반 에이전트 구현. Claude의 Tool Use 기능으로 도구 연동 에이전트 설계."
+  },
+  {
+    "모듈ID": "N8-M06",
+    "기본Tool": "Cursor",
+    "대체Tool": "CrewAI",
+    "변경점": "CrewAI 프레임워크 기반 멀티에이전트 팀 구성. Role 기반 에이전트 설계 및 Task 위임 실습."
+  },
+  {
+    "모듈ID": "N9-M02",
+    "기본Tool": "OpenAI API",
+    "대체Tool": "Anthropic API",
+    "변경점": "Anthropic Claude API 연동 개발로 전환. Messages API, Tool Use, Streaming 실습. 비용 비교 분석 포함."
+  },
+  {
+    "모듈ID": "N9-M03",
+    "기본Tool": "OpenAI API",
+    "대체Tool": "HuggingFace",
+    "변경점": "HuggingFace 오픈소스 임베딩 모델 활용 RAG 구축. 자체 서버 배포 가능한 온프레미스 구성 실습."
+  },
+  {
+    "모듈ID": "N9-M05",
+    "기본Tool": "OpenAI API",
+    "대체Tool": "HuggingFace",
+    "변경점": "HuggingFace PEFT/LoRA 라이브러리 기반 파인튜닝 실습. 오픈소스 모델(Llama, Mistral 등) 활용."
+  },
+  {
+    "모듈ID": "N10-L0-M02",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "HyperCLOVA X",
+    "변경점": "HyperCLOVA X 기반 사내 AI 플랫폼 활용 실습으로 전환. 사내 정보보안 정책 준수 환경 강조."
+  },
+  {
+    "모듈ID": "N10-L0-M02",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "사내LLM",
+    "변경점": "사내 구축 LLM 플랫폼 활용 실습. 외부 데이터 전송 없이 사내 시스템만 사용. 보안 가이드 필수 선행."
+  },
+  {
+    "모듈ID": "N11-P2-M02",
+    "기본Tool": "ChatGPT",
+    "대체Tool": "Cursor",
+    "변경점": "Cursor 기반 AI 코딩 페어로 프로토타입 개발 속도 향상. 바이브코딩 방식으로 MVP 빠른 구현 실습."
+  }
+]
