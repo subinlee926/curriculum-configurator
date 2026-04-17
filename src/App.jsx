@@ -80,9 +80,7 @@ export default function App() {
             <div style={styles.logoText}>FastCampus B2B</div>
             <div style={styles.appTitle}>AI 커리큘럼 설정기</div>
           </div>
-          <div style={styles.headerRight}>
-            <span style={styles.modeBadge}>Mode B: 직접 조합</span>
-          </div>
+          <div style={styles.headerRight}></div>
         </div>
       </header>
 
