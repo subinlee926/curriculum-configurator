@@ -15,6 +15,8 @@ const TAG_COLORS = {
   'Copilot전용': { bg: '#dbeafe', color: '#1e3a8a', border: '#93c5fd' },
   '고보안업종': { bg: '#fdf2f8', color: '#701a75', border: '#e879f9' },
   '제한적접속': { bg: '#f0fdf4', color: '#14532d', border: '#86efac' },
+  '파일업로드제한': { bg: '#fff7ed', color: '#7c2d12', border: '#fed7aa' },
+  '사내AI성능제한': { bg: '#fefce8', color: '#713f12', border: '#fde047' },
 };
 
 function highlightText(text, matchedKeywords) {
