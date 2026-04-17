@@ -118,9 +118,6 @@ export default function Step2ModuleSelect({
                       </div>
                     </div>
                     <div style={styles.moduleKeywords}>{mod.학습내용키워드}</div>
-                    <div style={styles.moduleIdRow}>
-                      <span style={styles.moduleId}>{mod.모듈ID}</span>
-                    </div>
                   </div>
                   <div style={styles.moduleHours}>{formatHours(mod.기본시수)}</div>
                 </label>
