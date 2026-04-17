@@ -12,12 +12,6 @@
     "변경점": "Google 생태계 통합(Gmail, Docs, Drive) 연계 사례 중심으로 설명. 멀티모달 기능은 Gemini 기준으로 시연."
   },
   {
-    "모듈ID": "N1-M01",
-    "기본Tool": "ChatGPT",
-    "대체Tool": "HyperCLOVA X",
-    "변경점": "한국어 특화 모델 특성 강조. 국내 기업 사례 중심, 네이버 클라우드 연동 내용 포함."
-  },
-  {
     "모듈ID": "N1-M02",
     "기본Tool": "ChatGPT",
     "대체Tool": "Claude",
@@ -196,12 +190,6 @@
     "기본Tool": "OpenAI API",
     "대체Tool": "HuggingFace",
     "변경점": "HuggingFace PEFT/LoRA 라이브러리 기반 파인튜닝 실습. 오픈소스 모델(Llama, Mistral 등) 활용."
-  },
-  {
-    "모듈ID": "N10-L0-M02",
-    "기본Tool": "ChatGPT",
-    "대체Tool": "HyperCLOVA X",
-    "변경점": "HyperCLOVA X 기반 사내 AI 플랫폼 활용 실습으로 전환. 사내 정보보안 정책 준수 환경 강조."
   },
   {
     "모듈ID": "N10-L0-M02",

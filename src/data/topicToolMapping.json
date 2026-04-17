@@ -3,7 +3,12 @@
     "주제코드": "N1",
     "주제명": "생성형 AI 기초·리터러시",
     "기본시수": 8,
-    "도구목록": ["ChatGPT", "Claude", "Gemini", "Copilot", "HyperCLOVA X"],
+    "도구목록": [
+      "ChatGPT",
+      "Claude",
+      "Gemini",
+      "Copilot"
+    ],
     "기본Tool": "ChatGPT",
     "트랙": []
   },
@@ -11,20 +16,47 @@
     "주제코드": "N2",
     "주제명": "일반 실무 AI 활용",
     "기본시수": null,
-    "도구목록": ["ChatGPT", "Claude", "Gemini", "Copilot", "Perplexity", "Notion AI", "HyperCLOVA X"],
+    "도구목록": [
+      "ChatGPT",
+      "Claude",
+      "Gemini",
+      "Copilot",
+      "Perplexity",
+      "Notion AI"
+    ],
     "기본Tool": "ChatGPT",
     "트랙": [
-      {"코드": "A", "명": "프롬프트 심화", "기본시수": 8},
-      {"코드": "B", "명": "문서·보고서", "기본시수": 7},
-      {"코드": "C", "명": "데이터 분석", "기본시수": 8},
-      {"코드": "D", "명": "AI Tool·인사이트", "기본시수": 4}
+      {
+        "코드": "A",
+        "명": "프롬프트 심화",
+        "기본시수": 8
+      },
+      {
+        "코드": "B",
+        "명": "문서·보고서",
+        "기본시수": 7
+      },
+      {
+        "코드": "C",
+        "명": "데이터 분석",
+        "기본시수": 8
+      },
+      {
+        "코드": "D",
+        "명": "AI Tool·인사이트",
+        "기본시수": 4
+      }
     ]
   },
   {
     "주제코드": "N3",
     "주제명": "AI 리더십·임원 특강",
     "기본시수": 4,
-    "도구목록": ["ChatGPT", "Claude", "Gemini"],
+    "도구목록": [
+      "ChatGPT",
+      "Claude",
+      "Gemini"
+    ],
     "기본Tool": "ChatGPT",
     "트랙": []
   },
@@ -32,35 +64,100 @@
     "주제코드": "N4",
     "주제명": "AI 콘텐츠 제작·마케팅",
     "기본시수": null,
-    "도구목록": ["Midjourney", "DALL-E 3", "Stable Diffusion", "Adobe Firefly", "Runway", "Pika", "Sora", "Suno", "Udio", "Gamma", "Beautiful.ai", "ChatGPT"],
+    "도구목록": [
+      "Midjourney",
+      "DALL-E 3",
+      "Stable Diffusion",
+      "Adobe Firefly",
+      "Runway",
+      "Pika",
+      "Sora",
+      "Suno",
+      "Udio",
+      "Gamma",
+      "Beautiful.ai",
+      "ChatGPT"
+    ],
     "기본Tool": "Midjourney",
     "트랙": [
-      {"코드": "A", "명": "이미지 제작", "기본시수": 8},
-      {"코드": "B", "명": "영상 제작", "기본시수": 8},
-      {"코드": "C", "명": "사운드 제작", "기본시수": 4},
-      {"코드": "D", "명": "프레젠테이션", "기본시수": 5},
-      {"코드": "E", "명": "통합 워크플로우", "기본시수": 12}
+      {
+        "코드": "A",
+        "명": "이미지 제작",
+        "기본시수": 8
+      },
+      {
+        "코드": "B",
+        "명": "영상 제작",
+        "기본시수": 8
+      },
+      {
+        "코드": "C",
+        "명": "사운드 제작",
+        "기본시수": 4
+      },
+      {
+        "코드": "D",
+        "명": "프레젠테이션",
+        "기본시수": 5
+      },
+      {
+        "코드": "E",
+        "명": "통합 워크플로우",
+        "기본시수": 12
+      }
     ]
   },
   {
     "주제코드": "N5",
     "주제명": "직무별·직무특화 AI",
     "기본시수": 8,
-    "도구목록": ["ChatGPT", "Claude", "Gemini", "Copilot", "Perplexity", "Notion AI", "HyperCLOVA X"],
+    "도구목록": [
+      "ChatGPT",
+      "Claude",
+      "Gemini",
+      "Copilot",
+      "Perplexity",
+      "Notion AI"
+    ],
     "기본Tool": "ChatGPT",
     "트랙": [
-      {"코드": "A", "명": "기획", "기본시수": 8},
-      {"코드": "B", "명": "마케팅", "기본시수": 8},
-      {"코드": "C", "명": "HR", "기본시수": 8},
-      {"코드": "D", "명": "R&D", "기본시수": 8},
-      {"코드": "E", "명": "재무", "기본시수": 8}
+      {
+        "코드": "A",
+        "명": "기획",
+        "기본시수": 8
+      },
+      {
+        "코드": "B",
+        "명": "마케팅",
+        "기본시수": 8
+      },
+      {
+        "코드": "C",
+        "명": "HR",
+        "기본시수": 8
+      },
+      {
+        "코드": "D",
+        "명": "R&D",
+        "기본시수": 8
+      },
+      {
+        "코드": "E",
+        "명": "재무",
+        "기본시수": 8
+      }
     ]
   },
   {
     "주제코드": "N6",
     "주제명": "업무자동화·Copilot·M365",
     "기본시수": 8,
-    "도구목록": ["Copilot for M365", "Power Automate", "Power BI", "SharePoint Copilot"],
+    "도구목록": [
+      "Copilot for M365",
+      "Power Automate",
+      "Power BI",
+      "SharePoint Copilot"
+    ],
     "기본Tool": "Copilot for M365",
     "트랙": []
   },
@@ -68,7 +165,12 @@
     "주제코드": "N7",
     "주제명": "신입사원·승격자 AI",
     "기본시수": 6,
-    "도구목록": ["ChatGPT", "Claude", "Gemini", "Copilot", "HyperCLOVA X"],
+    "도구목록": [
+      "ChatGPT",
+      "Claude",
+      "Gemini",
+      "Copilot"
+    ],
     "기본Tool": "ChatGPT",
     "트랙": []
   },
@@ -76,7 +178,15 @@
     "주제코드": "N8",
     "주제명": "바이브코딩·AI Agent",
     "기본시수": 14,
-    "도구목록": ["Cursor", "GitHub Copilot", "Claude", "ChatGPT", "LangChain", "LangGraph", "CrewAI"],
+    "도구목록": [
+      "Cursor",
+      "GitHub Copilot",
+      "Claude",
+      "ChatGPT",
+      "LangChain",
+      "LangGraph",
+      "CrewAI"
+    ],
     "기본Tool": "Cursor",
     "트랙": []
   },
@@ -84,7 +194,15 @@
     "주제코드": "N9",
     "주제명": "개발자·SW엔지니어 AI",
     "기본시수": 16,
-    "도구목록": ["OpenAI API", "Anthropic API", "LangChain", "LlamaIndex", "Pinecone", "Weaviate", "HuggingFace"],
+    "도구목록": [
+      "OpenAI API",
+      "Anthropic API",
+      "LangChain",
+      "LlamaIndex",
+      "Pinecone",
+      "Weaviate",
+      "HuggingFace"
+    ],
     "기본Tool": "OpenAI API",
     "트랙": []
   },
@@ -92,27 +210,77 @@
     "주제코드": "N10",
     "주제명": "전사 AI 교육체계·AX전환",
     "기본시수": null,
-    "도구목록": ["ChatGPT", "Claude", "Gemini", "Copilot", "HyperCLOVA X", "사내LLM"],
+    "도구목록": [
+      "ChatGPT",
+      "Claude",
+      "Gemini",
+      "Copilot",
+      "사내LLM"
+    ],
     "기본Tool": "ChatGPT",
     "트랙": [
-      {"코드": "Lv.0", "명": "AI 인식 (전직원)", "기본시수": 5},
-      {"코드": "Lv.1", "명": "AI 실무 입문", "기본시수": 8},
-      {"코드": "Lv.2", "명": "AI 실무 심화", "기본시수": 12},
-      {"코드": "Lv.3", "명": "AI 자동화·Agent", "기본시수": 15},
-      {"코드": "Lv.4", "명": "AI 내재화·거버넌스", "기본시수": 24},
-      {"코드": "리더", "명": "AI 리더십", "기본시수": 12}
+      {
+        "코드": "Lv.0",
+        "명": "AI 인식 (전직원)",
+        "기본시수": 5
+      },
+      {
+        "코드": "Lv.1",
+        "명": "AI 실무 입문",
+        "기본시수": 8
+      },
+      {
+        "코드": "Lv.2",
+        "명": "AI 실무 심화",
+        "기본시수": 12
+      },
+      {
+        "코드": "Lv.3",
+        "명": "AI 자동화·Agent",
+        "기본시수": 15
+      },
+      {
+        "코드": "Lv.4",
+        "명": "AI 내재화·거버넌스",
+        "기본시수": 24
+      },
+      {
+        "코드": "리더",
+        "명": "AI 리더십",
+        "기본시수": 12
+      }
     ]
   },
   {
     "주제코드": "N11",
     "주제명": "AI 해커톤·아이디어톤·PoC",
     "기본시수": null,
-    "도구목록": ["ChatGPT", "Claude", "Gemini", "Cursor", "GitHub Copilot", "LangChain", "Notion AI"],
+    "도구목록": [
+      "ChatGPT",
+      "Claude",
+      "Gemini",
+      "Cursor",
+      "GitHub Copilot",
+      "LangChain",
+      "Notion AI"
+    ],
     "기본Tool": "ChatGPT",
     "트랙": [
-      {"코드": "1단계", "명": "아이디어 발굴", "기본시수": 16},
-      {"코드": "2단계", "명": "프로토타입 개발", "기본시수": 20},
-      {"코드": "3단계", "명": "발표 및 사업화", "기본시수": 14}
+      {
+        "코드": "1단계",
+        "명": "아이디어 발굴",
+        "기본시수": 16
+      },
+      {
+        "코드": "2단계",
+        "명": "프로토타입 개발",
+        "기본시수": 20
+      },
+      {
+        "코드": "3단계",
+        "명": "발표 및 사업화",
+        "기본시수": 14
+      }
     ]
   }
 ]

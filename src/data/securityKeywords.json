@@ -4,8 +4,26 @@
     "태그": "폐쇄망",
     "설명": "인터넷 연결이 차단된 내부 망 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity", "Midjourney", "DALL-E 3", "Runway", "Pika", "Sora", "Suno", "Udio", "Gamma", "Beautiful.ai", "OpenAI API", "Anthropic API"],
-      "대체Tool": ["사내LLM", "HyperCLOVA X"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity",
+        "Midjourney",
+        "DALL-E 3",
+        "Runway",
+        "Pika",
+        "Sora",
+        "Suno",
+        "Udio",
+        "Gamma",
+        "Beautiful.ai",
+        "OpenAI API",
+        "Anthropic API"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "외부 API 연동 모듈은 오프라인 실습 또는 사내 LLM으로 대체. 실습 환경 사전 구성 필요."
     }
   },
@@ -14,8 +32,26 @@
     "태그": "폐쇄망",
     "설명": "인터넷 연결이 차단된 내부 망 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity", "Midjourney", "DALL-E 3", "Runway", "Pika", "Sora", "Suno", "Udio", "Gamma", "Beautiful.ai", "OpenAI API", "Anthropic API"],
-      "대체Tool": ["사내LLM", "HyperCLOVA X"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity",
+        "Midjourney",
+        "DALL-E 3",
+        "Runway",
+        "Pika",
+        "Sora",
+        "Suno",
+        "Udio",
+        "Gamma",
+        "Beautiful.ai",
+        "OpenAI API",
+        "Anthropic API"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "외부 서비스 접근 불가. 사내 구축 모델 또는 오프라인 시나리오로 실습 재구성 필요."
     }
   },
@@ -24,8 +60,15 @@
     "태그": "사내LLM전용",
     "설명": "자체 구축한 LLM 플랫폼만 사용 허가",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity"],
-      "대체Tool": ["사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "외부 클라우드 AI 서비스 대신 사내 LLM API 연동으로 실습 재구성."
     }
   },
@@ -34,8 +77,15 @@
     "태그": "사내LLM전용",
     "설명": "자체 구축한 LLM 플랫폼만 사용 허가",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity"],
-      "대체Tool": ["사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "외부 클라우드 AI 서비스 대신 사내 LLM API 연동으로 실습 재구성."
     }
   },
@@ -44,8 +94,15 @@
     "태그": "사내LLM전용",
     "설명": "자체 구축한 LLM 플랫폼만 사용 허가",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini"],
-      "대체Tool": ["사내LLM", "HuggingFace"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini"
+      ],
+      "대체Tool": [
+        "사내LLM",
+        "HuggingFace"
+      ],
       "모듈조정": "온프레미스 배포 가능한 오픈소스 모델 활용 방안 포함. 인프라 요건 사전 협의 필요."
     }
   },
@@ -65,7 +122,10 @@
     "설명": "Microsoft 365 라이선스 보유 환경",
     "효과": {
       "제외Tool": [],
-      "대체Tool": ["Copilot for M365", "Copilot"],
+      "대체Tool": [
+        "Copilot for M365",
+        "Copilot"
+      ],
       "모듈조정": "N6 Copilot·M365 모듈 우선 권장. Office 앱 내 Copilot 기능 중심 실습 구성 가능."
     }
   },
@@ -75,7 +135,10 @@
     "설명": "Microsoft 365 라이선스 보유 환경",
     "효과": {
       "제외Tool": [],
-      "대체Tool": ["Copilot for M365", "Copilot"],
+      "대체Tool": [
+        "Copilot for M365",
+        "Copilot"
+      ],
       "모듈조정": "M365 생태계 중심 커리큘럼 강화. Word·Excel·Teams Copilot 실습 우선 편성."
     }
   },
@@ -85,7 +148,10 @@
     "설명": "Microsoft Copilot 사용 환경",
     "효과": {
       "제외Tool": [],
-      "대체Tool": ["Copilot for M365", "Copilot"],
+      "대체Tool": [
+        "Copilot for M365",
+        "Copilot"
+      ],
       "모듈조정": "Copilot 기반 실습으로 전환. M365 앱 내 Copilot 기능 최대 활용."
     }
   },
@@ -94,8 +160,14 @@
     "태그": "Copilot전용",
     "설명": "Microsoft Copilot 전용 사용 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini"],
-      "대체Tool": ["Copilot for M365"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini"
+      ],
+      "대체Tool": [
+        "Copilot for M365"
+      ],
       "모듈조정": "모든 실습을 Copilot 기반으로 재구성. N6 커리큘럼 병행 구성 권장."
     }
   },
@@ -104,8 +176,15 @@
     "태그": "M365미보유",
     "설명": "Microsoft 365 라이선스 미보유",
     "효과": {
-      "제외Tool": ["Copilot for M365", "Power Automate", "SharePoint Copilot"],
-      "대체Tool": ["Google Workspace", "Notion AI"],
+      "제외Tool": [
+        "Copilot for M365",
+        "Power Automate",
+        "SharePoint Copilot"
+      ],
+      "대체Tool": [
+        "Google Workspace",
+        "Notion AI"
+      ],
       "모듈조정": "N6 모듈 제외 또는 Google Workspace 기반 대안 실습으로 대체."
     }
   },
@@ -114,8 +193,14 @@
     "태그": "Google환경",
     "설명": "Google Workspace 사용 환경",
     "효과": {
-      "제외Tool": ["Copilot for M365", "Power Automate"],
-      "대체Tool": ["Gemini", "Google AI"],
+      "제외Tool": [
+        "Copilot for M365",
+        "Power Automate"
+      ],
+      "대체Tool": [
+        "Gemini",
+        "Google AI"
+      ],
       "모듈조정": "Google Docs·Sheets·Slides Gemini 기능 중심 실습. Google Apps Script 자동화 포함."
     }
   },
@@ -124,8 +209,13 @@
     "태그": "Google환경",
     "설명": "Google Workspace 사용 환경",
     "효과": {
-      "제외Tool": ["Copilot for M365", "Power Automate"],
-      "대체Tool": ["Gemini"],
+      "제외Tool": [
+        "Copilot for M365",
+        "Power Automate"
+      ],
+      "대체Tool": [
+        "Gemini"
+      ],
       "모듈조정": "Gemini for Google Workspace 기능 중심 실습으로 재구성."
     }
   },
@@ -154,8 +244,19 @@
     "태그": "외부SaaS차단",
     "설명": "외부 SaaS 서비스 접근 차단 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity", "Midjourney", "Runway", "Suno", "Gamma"],
-      "대체Tool": ["사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity",
+        "Midjourney",
+        "Runway",
+        "Suno",
+        "Gamma"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "외부 웹 서비스 사용 불가. 로컬 설치형 도구 또는 사내 시스템으로 전환 필요."
     }
   },
@@ -164,8 +265,15 @@
     "태그": "외부SaaS차단",
     "설명": "외부 SaaS 서비스 사용 미허가",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity"],
-      "대체Tool": ["사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "승인된 내부 시스템 활용 실습으로 전환. 도입 승인 프로세스 안내 포함."
     }
   },
@@ -184,7 +292,10 @@
     "태그": "VDI환경",
     "설명": "가상 데스크탑 인프라(VDI) 환경",
     "효과": {
-      "제외Tool": ["Cursor", "GitHub Copilot"],
+      "제외Tool": [
+        "Cursor",
+        "GitHub Copilot"
+      ],
       "대체Tool": [],
       "모듈조정": "브라우저 기반 도구 우선. IDE 설치 필요 실습은 환경 확인 후 진행."
     }
@@ -194,8 +305,13 @@
     "태그": "ChatGPT차단",
     "설명": "ChatGPT 접근 차단 환경",
     "효과": {
-      "제외Tool": ["ChatGPT"],
-      "대체Tool": ["Claude", "Gemini", "HyperCLOVA X"],
+      "제외Tool": [
+        "ChatGPT"
+      ],
+      "대체Tool": [
+        "Claude",
+        "Gemini"
+      ],
       "모듈조정": "ChatGPT 실습을 Claude 또는 Gemini로 전환. 동등 기능 확인 후 실습 진행."
     }
   },
@@ -204,8 +320,13 @@
     "태그": "ChatGPT차단",
     "설명": "ChatGPT 사용 미허가 환경",
     "효과": {
-      "제외Tool": ["ChatGPT"],
-      "대체Tool": ["Claude", "Gemini", "HyperCLOVA X"],
+      "제외Tool": [
+        "ChatGPT"
+      ],
+      "대체Tool": [
+        "Claude",
+        "Gemini"
+      ],
       "모듈조정": "대체 LLM으로 동일 학습목표 달성 가능. 도구 전환 실습 가이드 제공."
     }
   },
@@ -214,7 +335,11 @@
     "태그": "고보안업종",
     "설명": "금융권 등 고보안 업종",
     "효과": {
-      "제외Tool": ["Midjourney", "Runway", "Suno"],
+      "제외Tool": [
+        "Midjourney",
+        "Runway",
+        "Suno"
+      ],
       "대체Tool": [],
       "모듈조정": "금융 규제(금감원 가이드라인) 준수 내용 추가. 개인신용정보 처리 주의사항 강화."
     }
@@ -234,8 +359,13 @@
     "태그": "고보안업종",
     "설명": "공공기관·정부 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude"],
-      "대체Tool": ["HyperCLOVA X", "사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "국가정보보안기본지침 준수. 공공클라우드 허용 서비스 목록 확인 필요."
     }
   },
@@ -254,8 +384,18 @@
     "태그": "폐쇄망",
     "설명": "업무망과 인터넷망이 물리적으로 분리된 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity", "Midjourney", "DALL-E 3", "Runway"],
-      "대체Tool": ["사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity",
+        "Midjourney",
+        "DALL-E 3",
+        "Runway"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "망분리 환경 특성상 외부 서비스 실습 불가. 내부망 전용 도구 활용 방안 별도 협의 필요."
     }
   },
@@ -274,8 +414,17 @@
     "태그": "외부SaaS차단",
     "설명": "외부 클라우드 서비스 사용 불가",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity", "OpenAI API", "Anthropic API"],
-      "대체Tool": ["사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity",
+        "OpenAI API",
+        "Anthropic API"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "온프레미스 구성 도구 중심 실습. 클라우드 의존 기능은 개념 설명으로 대체."
     }
   },
@@ -285,7 +434,7 @@
     "설명": "네이버 클라우드 플랫폼 사용 환경",
     "효과": {
       "제외Tool": [],
-      "대체Tool": ["HyperCLOVA X"],
+      "대체Tool": [],
       "모듈조정": "CLOVA Studio API 활용 실습 포함. 한국어 특화 모델 활용 사례 강화."
     }
   },
@@ -305,7 +454,9 @@
     "설명": "Microsoft Azure 클라우드 환경",
     "효과": {
       "제외Tool": [],
-      "대체Tool": ["Copilot for M365"],
+      "대체Tool": [
+        "Copilot for M365"
+      ],
       "모듈조정": "Azure OpenAI Service 기반 API 실습으로 전환 가능. 엔터프라이즈 데이터 보호 적용."
     }
   },
@@ -314,8 +465,15 @@
     "태그": "폐쇄망",
     "설명": "자체 서버 온프레미스 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini"],
-      "대체Tool": ["HuggingFace", "사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini"
+      ],
+      "대체Tool": [
+        "HuggingFace",
+        "사내LLM"
+      ],
       "모듈조정": "온프레미스 배포 가능한 오픈소스 모델 활용 방안 포함. 서버 스펙 사전 확인 필요."
     }
   },
@@ -354,8 +512,15 @@
     "태그": "고보안업종",
     "설명": "방위산업 고보안 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity"],
-      "대체Tool": ["사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "방위산업 보안 규정 준수. 외부 서비스 사용 불가, 사내 시스템 전용 구성 필수."
     }
   },
@@ -364,8 +529,12 @@
     "태그": "엔터프라이즈API",
     "설명": "글로벌 다국어 환경",
     "효과": {
-      "제외Tool": ["HyperCLOVA X"],
-      "대체Tool": ["ChatGPT", "Claude", "Gemini"],
+      "제외Tool": [],
+      "대체Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini"
+      ],
       "모듈조정": "다국어 처리 실습 포함. 글로벌 AI 도구 활용 및 번역·현지화 실습 강화."
     }
   },
@@ -374,8 +543,14 @@
     "태그": "Google환경",
     "설명": "Google Workspace 사용 환경",
     "효과": {
-      "제외Tool": ["Copilot for M365", "Power Automate"],
-      "대체Tool": ["Gemini", "Google AI"],
+      "제외Tool": [
+        "Copilot for M365",
+        "Power Automate"
+      ],
+      "대체Tool": [
+        "Gemini",
+        "Google AI"
+      ],
       "모듈조정": "Google Docs·Sheets·Slides Gemini 기능 중심 실습. Google Apps Script 자동화 포함."
     }
   },
@@ -384,8 +559,14 @@
     "태그": "Google환경",
     "설명": "Google Workspace 사용 환경",
     "효과": {
-      "제외Tool": ["Copilot for M365", "Power Automate"],
-      "대체Tool": ["Gemini", "Google AI"],
+      "제외Tool": [
+        "Copilot for M365",
+        "Power Automate"
+      ],
+      "대체Tool": [
+        "Gemini",
+        "Google AI"
+      ],
       "모듈조정": "Google Docs·Sheets·Slides Gemini 기능 중심 실습."
     }
   },
@@ -394,8 +575,13 @@
     "태그": "Google환경",
     "설명": "Google 생태계 사용 환경",
     "효과": {
-      "제외Tool": ["Copilot for M365", "Power Automate"],
-      "대체Tool": ["Gemini"],
+      "제외Tool": [
+        "Copilot for M365",
+        "Power Automate"
+      ],
+      "대체Tool": [
+        "Gemini"
+      ],
       "모듈조정": "Gemini 기반 실습으로 전환. Google 도구 연동 강화."
     }
   },
@@ -464,8 +650,20 @@
     "태그": "폐쇄망",
     "설명": "인터넷 접속이 차단된 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity", "Midjourney", "DALL-E 3", "Runway", "Gamma", "OpenAI API"],
-      "대체Tool": ["사내LLM", "HyperCLOVA X"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity",
+        "Midjourney",
+        "DALL-E 3",
+        "Runway",
+        "Gamma",
+        "OpenAI API"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "외부 API 연동 모듈은 오프라인 실습 또는 사내 LLM으로 대체."
     }
   },
@@ -474,8 +672,19 @@
     "태그": "폐쇄망",
     "설명": "외부 인터넷 접속 불가 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity", "Midjourney", "Runway", "Gamma", "OpenAI API"],
-      "대체Tool": ["사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity",
+        "Midjourney",
+        "Runway",
+        "Gamma",
+        "OpenAI API"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "외부 서비스 전체 사용 불가. 사내 도구 전용으로 전환."
     }
   },
@@ -484,8 +693,19 @@
     "태그": "폐쇄망",
     "설명": "외부 서비스 접근 불가 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity", "Midjourney", "Runway", "Gamma", "OpenAI API"],
-      "대체Tool": ["사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity",
+        "Midjourney",
+        "Runway",
+        "Gamma",
+        "OpenAI API"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "외부 서비스 전체 사용 불가. 사내 도구 전용으로 전환."
     }
   },
@@ -494,8 +714,15 @@
     "태그": "사내LLM전용",
     "설명": "사내 GPT 전용 사용 환경",
     "효과": {
-      "제외Tool": ["ChatGPT", "Claude", "Gemini", "Perplexity"],
-      "대체Tool": ["사내LLM"],
+      "제외Tool": [
+        "ChatGPT",
+        "Claude",
+        "Gemini",
+        "Perplexity"
+      ],
+      "대체Tool": [
+        "사내LLM"
+      ],
       "모듈조정": "외부 클라우드 AI 서비스 대신 사내 GPT 연동으로 실습 재구성."
     }
   },
@@ -504,8 +731,13 @@
     "태그": "ChatGPT차단",
     "설명": "ChatGPT 사용 금지 환경",
     "효과": {
-      "제외Tool": ["ChatGPT"],
-      "대체Tool": ["Claude", "Gemini", "HyperCLOVA X"],
+      "제외Tool": [
+        "ChatGPT"
+      ],
+      "대체Tool": [
+        "Claude",
+        "Gemini"
+      ],
       "모듈조정": "ChatGPT 실습을 대체 LLM으로 전환."
     }
   },
@@ -514,8 +746,13 @@
     "태그": "ChatGPT차단",
     "설명": "ChatGPT 접근 불가 환경",
     "효과": {
-      "제외Tool": ["ChatGPT"],
-      "대체Tool": ["Claude", "Gemini", "HyperCLOVA X"],
+      "제외Tool": [
+        "ChatGPT"
+      ],
+      "대체Tool": [
+        "Claude",
+        "Gemini"
+      ],
       "모듈조정": "ChatGPT 실습을 대체 LLM으로 전환."
     }
   },
