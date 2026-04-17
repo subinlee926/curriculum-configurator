@@ -34,12 +34,10 @@ export default function Step5Result({
 
     return {
       순서: idx + 1,
-      모듈ID: mod.모듈ID,
       모듈명: mod.모듈명,
+      학습내용: mod.학습내용 || mod.학습내용키워드 || '—',
       시수: mod.기본시수,
       Tool: tool,
-      필수여부: mod.필수여부,
-      난이도: mod.난이도,
       비고: notes.join(' / ') || '—',
       hasWarning: notes.length > 0,
     };
@@ -51,13 +49,13 @@ export default function Step5Result({
   const warningCount = curriculumRows.filter((r) => r.hasWarning).length;
 
   const handleCopy = () => {
-    const header = ['순서', '모듈ID', '모듈명', '시수', 'Tool', '필수여부', '비고'].join('\t');
+    const header = ['순서', '모듈명', '학습 내용', '시수', 'Tool', '비고'].join('\t');
     const rows = curriculumRows
       .map((r) =>
-        [r.순서, r.모듈ID, r.모듈명, formatHours(r.시수), r.Tool, r.필수여부, r.비고].join('\t')
+        [r.순서, r.모듈명, r.학습내용, formatHours(r.시수), r.Tool, r.비고].join('\t')
       )
       .join('\n');
-    const footer = `\n총 시수\t\t${curriculumRows.length}개 모듈\t${formatHours(totalHours)}\t\t\t`;
+    const footer = `\n합계\t${curriculumRows.length}개 모듈\t\t${formatHours(totalHours)}\t\t`;
 
     const text = [header, rows, footer].join('\n');
     navigator.clipboard.writeText(text).then(() => {
@@ -133,46 +131,34 @@ export default function Step5Result({
           <thead>
             <tr style={styles.thead}>
               <th style={{ ...styles.th, width: 44 }}>순서</th>
-              <th style={{ ...styles.th, width: 100 }}>모듈 ID</th>
-              <th style={{ ...styles.th }}>모듈명</th>
-              <th style={{ ...styles.th, width: 60 }}>시수</th>
-              <th style={{ ...styles.th, width: 140 }}>Tool</th>
-              <th style={{ ...styles.th, width: 56 }}>필수</th>
-              <th style={{ ...styles.th }}>비고</th>
+              <th style={{ ...styles.th, width: 160 }}>모듈명</th>
+              <th style={{ ...styles.th }}>학습 내용</th>
+              <th style={{ ...styles.th, width: 56 }}>시수</th>
+              <th style={{ ...styles.th, width: 120 }}>Tool</th>
+              <th style={{ ...styles.th, width: 180 }}>비고</th>
             </tr>
           </thead>
           <tbody>
             {curriculumRows.map((row) => (
               <tr
-                key={row.모듈ID}
+                key={row.순서}
                 style={{
                   ...styles.tr,
                   background: row.hasWarning ? '#fff7ed' : row.순서 % 2 === 0 ? '#f9fafb' : '#fff',
                 }}
               >
                 <td style={{ ...styles.td, textAlign: 'center', color: '#9ca3af' }}>{row.순서}</td>
-                <td style={{ ...styles.td, fontFamily: 'monospace', fontSize: 12, color: '#6b7280' }}>
-                  {row.모듈ID}
-                </td>
                 <td style={styles.td}>
                   <div style={styles.moduleNameCell}>{row.모듈명}</div>
+                </td>
+                <td style={{ ...styles.td, fontSize: 13, color: '#374151', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
+                  {row.학습내용}
                 </td>
                 <td style={{ ...styles.td, textAlign: 'center', fontWeight: 700, color: '#1f3864' }}>
                   {formatHours(row.시수)}
                 </td>
                 <td style={styles.td}>
                   <span style={styles.toolPill}>{row.Tool}</span>
-                </td>
-                <td style={{ ...styles.td, textAlign: 'center' }}>
-                  <span
-                    style={{
-                      ...styles.reqPill,
-                      background: row.필수여부 === '필수' ? '#fee2e2' : '#f3f4f6',
-                      color: row.필수여부 === '필수' ? '#991b1b' : '#6b7280',
-                    }}
-                  >
-                    {row.필수여부}
-                  </span>
                 </td>
                 <td style={{ ...styles.td, fontSize: 12, color: row.hasWarning ? '#c2410c' : '#6b7280' }}>
                   {row.비고}
@@ -182,15 +168,16 @@ export default function Step5Result({
           </tbody>
           <tfoot>
             <tr style={styles.tfootRow}>
-              <td colSpan={3} style={styles.tfootLabel}>
+              <td colSpan={2} style={styles.tfootLabel}>
                 합계
+              </td>
+              <td style={{ ...styles.td, color: '#6b7280', fontSize: 12 }}>
+                {curriculumRows.length}개 모듈
               </td>
               <td style={{ ...styles.td, textAlign: 'center', fontWeight: 700, fontSize: 15, color: '#1f3864' }}>
                 {formatHours(totalHours)}
               </td>
-              <td colSpan={3} style={{ ...styles.td, color: '#6b7280', fontSize: 12 }}>
-                {curriculumRows.length}개 모듈
-              </td>
+              <td colSpan={2} style={{ ...styles.td, color: '#6b7280', fontSize: 12 }}></td>
             </tr>
           </tfoot>
         </table>
