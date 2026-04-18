@@ -261,12 +261,20 @@ export default async function handler(req, res) {
     });
   }
 
-  const BATCH_SIZE = 5;
+  // 시스템 프롬프트가 약 3,400 토큰이라 배치 분할은 오히려 비효율적이다
+  // (모든 배치에 시스템 프롬프트가 복제되어 TPM 윈도우를 빠르게 소진)
+  // 11개 이하는 단일 호출로 3,400 + 11*750 = 11,650 토큰 — 12,000 TPM 내에 안전
+  // 12개 이상일 때만 분할 (이 경우 partial failure 가능성 있음, 에러 메시지로 안내)
+  const SINGLE_CALL_THRESHOLD = 11;
   const batches = [];
-  for (let i = 0; i < modules.length; i += BATCH_SIZE) {
-    batches.push(modules.slice(i, i + BATCH_SIZE));
+  if (modules.length <= SINGLE_CALL_THRESHOLD) {
+    batches.push(modules);
+  } else {
+    for (let i = 0; i < modules.length; i += SINGLE_CALL_THRESHOLD) {
+      batches.push(modules.slice(i, i + SINGLE_CALL_THRESHOLD));
+    }
   }
-  console.log(`[customize-curriculum] ${modules.length} modules → ${batches.length} batch(es) of up to ${BATCH_SIZE}`);
+  console.log(`[customize-curriculum] ${modules.length} modules → ${batches.length} batch(es) (threshold: single call ≤${SINGLE_CALL_THRESHOLD})`);
 
   const parseGroqRetrySec = (text) => {
     const m = text.match(/try again in (\d+(?:\.\d+)?)\s*s/);
@@ -284,6 +292,9 @@ export default async function handler(req, res) {
       modules: batchModules,
     });
 
+    // max_tokens: 모듈 수에 비례 (모듈당 약 500 토큰 여유 + 최소 1024)
+    const adaptiveMaxTokens = Math.min(8192, Math.max(1024, batchModules.length * 500 + 600));
+
     const requestBody = JSON.stringify({
       model: MODEL,
       messages: [
@@ -292,7 +303,7 @@ export default async function handler(req, res) {
       ],
       response_format: { type: 'json_object' },
       temperature: 0.4,
-      max_tokens: 4096,
+      max_tokens: adaptiveMaxTokens,
     });
 
     const doFetch = () =>
