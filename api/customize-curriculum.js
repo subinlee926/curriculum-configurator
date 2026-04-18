@@ -277,8 +277,20 @@ export default async function handler(req, res) {
   console.log(`[customize-curriculum] ${modules.length} modules → ${batches.length} batch(es) (threshold: single call ≤${SINGLE_CALL_THRESHOLD})`);
 
   const parseGroqRetrySec = (text) => {
-    const m = text.match(/try again in (\d+(?:\.\d+)?)\s*s/);
-    return m ? parseFloat(m[1]) : null;
+    // TPD: "try again in 46m28.128s" / TPM: "try again in 1.5s" / 혼합: "2m10s"
+    const m = text.match(/try again in\s+(?:(\d+)\s*m)?\s*(\d+(?:\.\d+)?)\s*s/);
+    if (!m) return null;
+    const mins = m[1] ? parseInt(m[1], 10) : 0;
+    const secs = parseFloat(m[2]);
+    return mins * 60 + secs;
+  };
+
+  const detectLimitKind = (text) => {
+    if (/tokens?\s+per\s+day|TPD/i.test(text)) return 'TPD';
+    if (/tokens?\s+per\s+minute|TPM/i.test(text)) return 'TPM';
+    if (/requests?\s+per\s+day|RPD/i.test(text)) return 'RPD';
+    if (/requests?\s+per\s+minute|RPM/i.test(text)) return 'RPM';
+    return 'UNKNOWN';
   };
 
   const callGroqForBatch = async (batchModules) => {
@@ -350,10 +362,24 @@ export default async function handler(req, res) {
       console.error(`[customize-curriculum] Groq ${resp.status} on batch ${i + 1}/${batches.length}:`, errBody);
       if (resp.status === 429) {
         const hintSec = parseGroqRetrySec(errBody);
+        const limitKind = detectLimitKind(errBody);
         const retryAfter = hintSec !== null ? Math.ceil(hintSec + 1) : 60;
+
+        let userMessage;
+        if (limitKind === 'TPD' || limitKind === 'RPD') {
+          const mins = Math.ceil(retryAfter / 60);
+          userMessage =
+            hintSec !== null && mins >= 2
+              ? `오늘 AI 일일 사용 한도에 도달했습니다. 약 ${mins}분 후 또는 내일 다시 시도해주세요.`
+              : '오늘 AI 일일 사용 한도에 도달했습니다. 내일 다시 시도해주세요.';
+        } else {
+          userMessage = `요청이 많아 잠시 대기가 필요합니다. ${retryAfter}초 후 다시 시도해주세요.`;
+        }
+
         return res.status(429).json({
-          error: `요청이 많아 잠시 대기가 필요합니다. ${retryAfter}초 후 다시 시도해주세요.`,
+          error: userMessage,
           retryAfter,
+          limitKind,
           partialProgress: allModules.length,
         });
       }

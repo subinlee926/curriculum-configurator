@@ -322,7 +322,9 @@ export default function Step6Customization({
             {loading
               ? '맞춤 커리큘럼 생성 중…'
               : cooldown > 0
-                ? `${cooldown}초 후 재시도 가능`
+                ? cooldown >= 120
+                  ? `${Math.ceil(cooldown / 60)}분 후 재시도 가능`
+                  : `${cooldown}초 후 재시도 가능`
                 : hasCustomized
                   ? '맞춤 커리큘럼 재생성'
                   : '맞춤 커리큘럼 생성'}
@@ -365,7 +367,11 @@ export default function Step6Customization({
               onClick={handleRegenerateAll}
               disabled={loading || cooldown > 0}
             >
-              {cooldown > 0 ? `${cooldown}초 대기` : '전체 재생성'}
+              {cooldown > 0
+                ? cooldown >= 120
+                  ? `${Math.ceil(cooldown / 60)}분 대기`
+                  : `${cooldown}초 대기`
+                : '전체 재생성'}
             </button>
           </div>
 
@@ -414,7 +420,13 @@ export default function Step6Customization({
                         disabled={regeneratingId === row.id || loading || cooldown > 0}
                         title="이 모듈만 다시 생성"
                       >
-                        {regeneratingId === row.id ? '생성 중…' : cooldown > 0 ? `${cooldown}s` : '재생성'}
+                        {regeneratingId === row.id
+                          ? '생성 중…'
+                          : cooldown > 0
+                            ? cooldown >= 120
+                              ? `${Math.ceil(cooldown / 60)}m`
+                              : `${cooldown}s`
+                            : '재생성'}
                       </button>
                     </td>
                   </tr>
