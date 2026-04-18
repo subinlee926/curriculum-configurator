@@ -1,0 +1,318 @@
+const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
+const MODEL = 'llama-3.3-70b-versatile';
+
+const SYSTEM_PROMPT = `당신은 기업 AI 교육 커리큘럼을 특정 고객사·직무 맥락에 맞게 재작성하는 전문 기획자입니다. 반드시 JSON 형식으로 응답합니다.
+
+[당신의 전문성]
+- 수백 개 직무의 실무 워크플로우·산출물·도구·지표·전문 용어를 깊이 이해합니다
+- 각 직무에서 실제로 쓰는 문서명·데이터 유형·업무 프로세스·KPI 를 정확히 알고 있습니다
+- 표면적 키워드 치환이 아닌, 실무자가 공감하는 진짜 업계 언어로 재작성합니다
+- 모든 출력은 순수 한국어로 작성합니다 (일본어 히라가나·가타카나, 간체 한자 등 한국어가 아닌 문자 혼입 절대 금지)
+
+[재작성 원칙]
+1. 표준 학습 내용의 불릿 구조·개수는 그대로 유지합니다
+2. 각 불릿의 예시·산출물·데이터·사용 맥락을 해당 직무의 실제 업무 용어로 전면 재표현합니다
+3. 난이도·교육 대상의 사전 지식 수준에 맞게 용어와 복잡도를 조정합니다
+4. 실습 내용은 표준 커리큘럼 깊이 수준 (한 줄~두 줄 요약) 을 유지합니다
+5. 모듈명·시수·Tool 은 절대 변경하지 않습니다
+6. 여러 모듈을 동시에 처리할 때, 모든 모듈에 동일한 퀄리티를 적용합니다 (첫 모듈만 잘 하고 나머지를 대충 하지 말 것)
+
+[작업 방식 — 각 불릿마다 독립적으로 3단계 수행]
+각 불릿을 처리할 때 내부적으로 다음 3단계를 반드시 거치세요:
+  [단계 1] 원본 불릿의 일반 명사 찾기 ("문서"·"데이터"·"보고서"·"자료"·"정보"·"파일"·"외부 데이터"·"시장"·"경쟁사 동향" 등)
+  [단계 2] 각 일반 명사를 해당 직무의 실제 산출물·도구·지표 이름으로 교체
+  [단계 3] 자가 점검 — 직무 키워드 단순 접두 / 일반 명사 잔존 / 타 직무에도 적용 가능한 수준 → 재작성
+
+[품질 기준 — "키워드 접두" ≠ "진짜 맞춤"]
+
+나쁜 예 (게임 기획자 대상):
+  원본:    "[실습] 이메일·기획서·제안서·보고서 초안 작성"
+  나쁨:    "[실습] 게임 이메일·게임 기획서·게임 제안서·게임 보고서 초안 작성"
+
+좋은 예 (게임 기획자 대상):
+  원본:    "[실습] 이메일·기획서·제안서·보고서 초안 작성"
+  좋음:    "[실습] GDD(Game Design Document)·PRD·패치 노트·밸런스 조정 리포트 초안 작성"
+
+좋은 예 (퍼포먼스 마케터 대상):
+  원본:    "[실습] 외부 데이터 분석·예측 (환율·원자재 동향 등) 기반 보고서 초안 생성"
+  좋음:    "[실습] GA4·Meta Ads·Google Ads 매체 리포트 데이터 분석 기반 주간 퍼포먼스 리포트 초안 생성"
+
+좋은 예 (HR 담당자 대상):
+  원본:    "- 시장조사·경쟁사 동향 요약 및 인사이트 도출"
+  좋음:    "- 동종 업계 보상 벤치마크·경쟁사 채용 공고·이직률 지표 리서치를 통한 인사 전략 인사이트 도출"
+
+좋은 예 (데이터 분석가 대상):
+  원본:    "- 문서/보고서 초안 자동 생성 (제목·목차·본문 구조화)"
+  좋음:    "- 분석 리포트·대시보드 설명서·A/B 테스트 결과서 초안 자동 생성 (배경·가설·검증·결론 구조화)"
+
+좋은 예 (게임 기획자 대상):
+  원본:    "- [실습] 대규모 파일 요약·정리"
+  좋음:    "- [실습] 수백 페이지 규모의 기존 GDD·유저 리서치 자료·QA 이슈 로그 요약·정리"
+
+좋은 예 (게임 기획자 대상):
+  원본:    "- 시장조사·경쟁사 동향 요약 및 인사이트 도출"
+  좋음:    "- 경쟁 타이틀 업데이트 노트·장르별 메타 트렌드·글로벌 플랫폼 매출 동향 리서치를 통한 기획 인사이트 도출"
+
+좋은 예 (게임 기획자 대상):
+  원본:    "- [실습] 외부 데이터 분석·예측 (환율·원자재 동향 등) 기반 보고서 초안 생성"
+  좋음:    "- [실습] DAU·리텐션·매출 지표 등 라이브 게임 운영 데이터 해석 기반, 차기 콘텐츠 우선순위 제안 리포트 초안 생성"
+
+[환각 방지 규칙 — 가장 중요한 안전 규정]
+
+모르는 것에 대해 그럴듯한 가짜 이름을 만들지 마세요. 확신이 없으면 **업계 표준 용어로 후퇴**하는 것이 정답입니다.
+
+**규칙 1. 회사 내부 제품·도구·플랫폼 이름을 지어내지 말 것**
+- "[회사명] + 플랫폼/시스템/도구/리포트" 형태로 가상의 내부 제품명을 생성하는 것은 엄격히 금지
+- 회사 내부 도구·제품의 실제 이름을 확신할 수 없다면, 업계 표준 도구나 일반 설명으로 대체
+
+나쁜 예 (환각):
+  네이버 데이터 분석가: "[실습] 네이버 데이터 플랫폼·네이버 비즈니스 플랫폼·네이버 광고 리포트 초안 작성" — 금지
+  크래프톤 기획자: "[실습] 크래프톤 PUBG GDD·크래프톤 배그 밸런스 시스템 작성" — 금지
+  삼성생명 HR: "[실습] 삼성생명 인사 시스템·삼성 HR 플랫폼 활용" — 금지
+
+좋은 예 (환각 회피):
+  네이버 데이터 분석가: "[실습] SQL 쿼리 결과 리포트·대시보드 설명서·A/B 테스트 결과서 초안 작성" — 안전
+  크래프톤 기획자: "[실습] GDD·PRD·패치 노트·밸런스 조정 리포트 초안 작성" — 안전
+  삼성생명 HR: "[실습] 승진 심사서·인사 평가 리포트·채용 면접 질문지 초안 작성" — 안전
+
+**규칙 2. 허용되는 구체 용어 — 이 리스트 안에서 선택**
+
+게임 업계: GDD, PRD, 패치 노트, QA 이슈 로그, 밸런스 조정 리포트, 레벨 디자인 문서, 유저 리서치, DAU, MAU, 리텐션, ARPU, 매출 지표, 플랫폼별 매출, 장르 메타, 업데이트 노트
+
+마케팅 업계: GA4, Meta Ads, Google Ads, TikTok Ads, 캠페인 브리프, 퍼포먼스 리포트, 주간 매체 리포트, CTR, CPC, CPA, CPM, ROAS, 전환율, 리마케팅, A/B 테스트
+
+HR 업계: 채용 공고, 직무 기술서, 면접 질문지, 평가 보고서, 보상 벤치마크, 이직률, 직원 만족도 설문, 승진 심사서, 온보딩 플랜, 인사 규정집, 채용 KPI
+
+데이터 분석: SQL 쿼리, 대시보드, A/B 테스트 결과서, 분석 리포트, 가설 검증, 데이터 퀄리티 체크, 로그 데이터, 유저 행동 데이터, EDA, 회귀 분석, 코호트 분석, 퍼널 분석
+
+범용 도구: Notion, Slack, Jira, Confluence, Figma, Excel, Google Sheets, Tableau, Power BI, GitHub, ChatGPT, Claude, Gemini, Perplexity
+
+**규칙 3. 회사명 사용 원칙**
+- 회사명은 맥락(어떤 업종·스케일인지)으로만 활용
+- 회사명에 일반 명사를 붙여 내부 제품처럼 표현하지 말 것 ("네이버 데이터 플랫폼" X)
+- 회사명 언급 없이 직무 표준 용어만으로 불릿을 작성하는 것이 안전한 기본값
+
+**규칙 4. 자가 점검**
+각 불릿 작성 후:
+- "이 이름이 정말 해당 회사의 실제 제품·시스템인가?" 확신 없으면 → 업계 표준 용어로 교체
+- "이 용어가 구글 검색에서 쉽게 확인되는가?" 아니면 → 일반화
+- 확신 못 할 때는 구체성을 포기하고 안전하게 가세요
+
+[금지 — 최종 체크리스트]
+다음 중 하나라도 해당하면 해당 불릿을 재작성하세요:
+- 회사명 + 추정 제품명 조합 (최우선 금지)
+- "게임 [명사]", "마케팅 [명사]", "인사 [명사]" 같은 단순 접두 패턴
+- 원본의 "문서/데이터/보고서/자료/정보/파일" 등이 그대로 남은 경우
+- "~기획서·~디자인 문서·~보고서" 처럼 뻔한 접두 나열
+- 일반 명사 대비 구체적 산출물 이름이 1개도 등장하지 않는 불릿
+- 직무 3년차가 "이건 그냥 아무 직무에나 해당되는 일반 설명"이라고 느낄 추상 수준
+- 한국어 외 문자 (일본어 히라가나·가타카나, 간체 한자 등) 혼입
+- 출처 확인 어려운 임의 도구·시스템명 언급
+- 모듈명·시수·Tool 변경
+- 불릿 개수 변경`;
+
+function buildBatchPrompt({ company, role, level, audience, topicCode, topicName, modules }) {
+  const moduleBlocks = modules
+    .map(
+      (m, i) => `---
+모듈 ${i + 1}
+- ID: ${m.id}
+- 이름: ${m.name}
+- 시수: ${m.hours}H
+- 난이도: ${m.difficulty}
+- Tool: ${m.tool}
+- 원본 학습 내용:
+${m.originalContent}`
+    )
+    .join('\n\n');
+
+  return `[고객사 맥락]
+- 회사: ${company}
+- 직무: ${role}
+- 난이도: ${level}
+- 교육 대상: ${audience}
+
+[주제]
+- 코드: ${topicCode}
+- 이름: ${topicName}
+
+[재작성 대상 모듈들] (총 ${modules.length}개)
+각 모듈의 원본 학습 내용을 ${company} ${role} 직무 맥락으로 재작성하고, 모듈별 "실습 주제" 한 줄 요약을 덧붙이세요.
+
+${moduleBlocks}
+
+[JSON 응답 형식 — 이 스키마 엄격히 준수]
+{
+  "modules": [
+    {
+      "id": "모듈 ID",
+      "customizedContent": "재작성된 학습 내용 (원본 불릿 개수 동일 유지)",
+      "customizedPracticeTopic": "실습 주제 한 줄 요약"
+    }
+  ]
+}
+
+modules 배열에는 입력된 ${modules.length}개 모듈에 대한 재작성 결과가 모두 포함되어야 합니다.
+JSON 외 다른 설명·서문·후기를 절대 출력하지 마세요.`;
+}
+
+// ====================================================================
+// 서버사이드 detector (로그용, UI 미노출)
+// ====================================================================
+function detectMultilingualErrors(text) {
+  const errors = [];
+  const hiragana = text.match(/[\u3040-\u309F]/g);
+  if (hiragana) errors.push({ type: 'hiragana', count: hiragana.length, chars: [...new Set(hiragana)].join('') });
+  const katakana = text.match(/[\u30A0-\u30FF]/g);
+  if (katakana) errors.push({ type: 'katakana', count: katakana.length, chars: [...new Set(katakana)].join('') });
+  const cjkRuns = text.match(/[\u4E00-\u9FFF]{2,}/g);
+  if (cjkRuns) errors.push({ type: 'cjk_run', count: cjkRuns.length, examples: cjkRuns.slice(0, 3) });
+  return errors;
+}
+
+function detectHallucinationPatterns(text, company) {
+  const warnings = [];
+  const suspiciousSuffixes = ['플랫폼', '시스템', '솔루션', '툴', '서비스', '엔진'];
+  for (const suffix of suspiciousSuffixes) {
+    const pattern = new RegExp(`${company}\\s*[가-힣A-Za-z]{0,10}\\s*${suffix}`, 'g');
+    const matches = text.match(pattern);
+    if (matches) warnings.push({ suffix, count: matches.length, examples: matches.slice(0, 2) });
+  }
+  return warnings;
+}
+
+function countBullets(text) {
+  return text.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('-')).length;
+}
+
+function runDetectors(parsedModules, originalModules, company) {
+  const report = [];
+  for (const m of parsedModules) {
+    const original = originalModules.find((o) => o.id === m.id);
+    if (!original) {
+      report.push({ id: m.id, issue: 'UNKNOWN_MODULE_ID' });
+      continue;
+    }
+    const originalCount = countBullets(original.originalContent);
+    const newCount = countBullets(m.customizedContent);
+    const allText = (m.customizedContent ?? '') + '\n' + (m.customizedPracticeTopic ?? '');
+
+    const ml = detectMultilingualErrors(allText);
+    const hall = detectHallucinationPatterns(allText, company);
+    const bulletMismatch = newCount !== originalCount;
+
+    if (ml.length || hall.length || bulletMismatch) {
+      report.push({
+        id: m.id,
+        bulletMismatch: bulletMismatch ? `${originalCount}->${newCount}` : null,
+        multilingual: ml.length ? ml : null,
+        hallucination: hall.length ? hall : null,
+      });
+    }
+  }
+  return report;
+}
+
+// ====================================================================
+// 핸들러
+// ====================================================================
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const API_KEY = process.env.GROQ_API_KEY;
+  if (!API_KEY) {
+    console.error('[customize-curriculum] GROQ_API_KEY not configured');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const { company, role, level, audience, topicCode, topicName, modules } = req.body ?? {};
+
+  if (!company || !role || !level || !audience || !topicCode || !Array.isArray(modules) || modules.length === 0) {
+    return res.status(400).json({
+      error: 'Missing required fields',
+      required: ['company', 'role', 'level', 'audience', 'topicCode', 'modules (non-empty array)'],
+    });
+  }
+
+  const userPrompt = buildBatchPrompt({ company, role, level, audience, topicCode, topicName, modules });
+
+  const started = Date.now();
+  let response;
+  try {
+    response = await fetch(GROQ_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.4,
+        max_tokens: 8192,
+      }),
+    });
+  } catch (err) {
+    console.error('[customize-curriculum] network error:', err);
+    return res.status(502).json({ error: 'Upstream network error' });
+  }
+
+  if (!response.ok) {
+    const errBody = await response.text();
+    console.error(`[customize-curriculum] Groq API ${response.status}:`, errBody);
+    if (response.status === 429) {
+      return res.status(429).json({
+        error: 'Rate limit. Please retry in a few seconds.',
+        retryAfter: 10,
+      });
+    }
+    return res.status(502).json({ error: 'Upstream API error', status: response.status });
+  }
+
+  const data = await response.json();
+  const elapsed = Date.now() - started;
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) {
+    console.error('[customize-curriculum] empty content:', JSON.stringify(data));
+    return res.status(502).json({ error: 'Empty response from LLM' });
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(content);
+  } catch (e) {
+    console.error('[customize-curriculum] JSON parse failed:', content);
+    return res.status(502).json({ error: 'LLM returned invalid JSON' });
+  }
+
+  if (!Array.isArray(parsed.modules)) {
+    console.error('[customize-curriculum] missing modules array:', parsed);
+    return res.status(502).json({ error: 'LLM response missing modules array' });
+  }
+
+  // Detector 결과는 서버 로그에만 기록 (UI 미노출)
+  const detectorReport = runDetectors(parsed.modules, modules, company);
+  if (detectorReport.length > 0) {
+    console.warn(
+      '[customize-curriculum] quality issues detected:',
+      JSON.stringify({ company, role, elapsedMs: elapsed, report: detectorReport }, null, 2)
+    );
+  } else {
+    console.log(
+      '[customize-curriculum] OK:',
+      JSON.stringify({ company, role, moduleCount: modules.length, elapsedMs: elapsed, tokens: data.usage })
+    );
+  }
+
+  return res.status(200).json({
+    customizedModules: parsed.modules,
+    elapsedMs: elapsed,
+  });
+}

@@ -5,7 +5,15 @@ import Step2ModuleSelect from './components/Step2ModuleSelect';
 import Step3ToolSelect from './components/Step3ToolSelect';
 import Step4Security from './components/Step4Security';
 import Step5Result from './components/Step5Result';
+import Step6Customization from './components/Step6Customization';
 import { getModuleDefaultTool } from './utils/getDefaultTool';
+
+const DEFAULT_CUSTOMIZATION = {
+  company: '',
+  role: '',
+  level: '중급',
+  audience: '',
+};
 
 export default function App() {
   const [step, setStep] = useState(1);
@@ -14,6 +22,9 @@ export default function App() {
   const [toolSelections, setToolSelections] = useState({});
   const [securityText, setSecurityText] = useState('');
   const [detectedTags, setDetectedTags] = useState([]);
+  const [customization, setCustomization] = useState(DEFAULT_CUSTOMIZATION);
+  const [customizedModules, setCustomizedModules] = useState(null);
+  const [viewMode, setViewMode] = useState('original');
 
   const handleTopicSelect = (topicCode) => {
     setSelectedTopic(topicCode);
@@ -55,6 +66,9 @@ export default function App() {
     setToolSelections({});
     setSecurityText('');
     setDetectedTags([]);
+    setCustomization(DEFAULT_CUSTOMIZATION);
+    setCustomizedModules(null);
+    setViewMode('original');
   };
 
   return (
@@ -126,6 +140,23 @@ export default function App() {
               detectedTags={detectedTags}
               securityText={securityText}
               onBack={() => setStep(4)}
+              onNext={() => setStep(6)}
+              onReset={handleReset}
+            />
+          )}
+          {step === 6 && (
+            <Step6Customization
+              selectedTopic={selectedTopic}
+              selectedModules={selectedModules}
+              toolSelections={toolSelections}
+              detectedTags={detectedTags}
+              customization={customization}
+              setCustomization={setCustomization}
+              customizedModules={customizedModules}
+              setCustomizedModules={setCustomizedModules}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              onBack={() => setStep(5)}
               onReset={handleReset}
             />
           )}

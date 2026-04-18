@@ -4,6 +4,7 @@ const STEPS = [
   { num: 3, label: '도구 설정' },
   { num: 4, label: '보안 환경' },
   { num: 5, label: '커리큘럼 확인' },
+  { num: 6, label: '고객사 맞춤' },
 ];
 
 export default function StepIndicator({ currentStep }) {

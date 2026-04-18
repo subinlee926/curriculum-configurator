@@ -10,6 +10,7 @@ export default function Step5Result({
   detectedTags,
   securityText,
   onBack,
+  onNext,
   onReset,
 }) {
   const [copied, setCopied] = useState(false);
@@ -192,9 +193,16 @@ export default function Step5Result({
         <button style={styles.backBtn} onClick={onBack}>
           이전 (보안 환경 수정)
         </button>
-        <button style={styles.resetBtn} onClick={onReset}>
-          새 커리큘럼 구성
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button style={styles.resetBtn} onClick={onReset}>
+            새 커리큘럼 구성
+          </button>
+          {onNext && (
+            <button style={styles.nextBtn} onClick={onNext}>
+              다음: 고객사 맞춤 →
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -380,13 +388,23 @@ const styles = {
     cursor: 'pointer',
   },
   resetBtn: {
-    background: '#2E75B6',
+    background: '#f9fafb',
+    color: '#1f3864',
+    border: '1px solid #1f3864',
+    borderRadius: 8,
+    padding: '12px 22px',
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  nextBtn: {
+    background: '#1f3864',
     color: '#fff',
     border: 'none',
     borderRadius: 8,
-    padding: '12px 28px',
-    fontSize: 15,
-    fontWeight: 600,
+    padding: '12px 26px',
+    fontSize: 14,
+    fontWeight: 700,
     cursor: 'pointer',
   },
 };
