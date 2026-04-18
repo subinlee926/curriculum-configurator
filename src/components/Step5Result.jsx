@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import moduleMaster from '../data/moduleMaster.json';
-import topicToolMapping from '../data/topicToolMapping.json';
 import topics from '../data/topics.json';
+import { getModuleDefaultTool } from '../utils/getDefaultTool';
 
 export default function Step5Result({
   selectedTopic,
@@ -14,14 +14,12 @@ export default function Step5Result({
 }) {
   const [copied, setCopied] = useState(false);
 
-  const topicInfo = topicToolMapping.find((t) => t.주제코드 === selectedTopic);
   const topicMeta = topics.find((t) => t.코드 === selectedTopic);
-  const defaultTool = topicInfo ? topicInfo.기본Tool : '';
 
   const curriculumRows = selectedModules.map((moduleId, idx) => {
     const mod = moduleMaster.find((m) => m.모듈ID === moduleId);
     if (!mod) return null;
-    const tool = toolSelections[moduleId] || defaultTool;
+    const tool = toolSelections[moduleId] || getModuleDefaultTool(moduleId, selectedTopic);
 
     // Build 비고 based on detected tags
     const notes = [];

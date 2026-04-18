@@ -1,6 +1,7 @@
 import moduleMaster from '../data/moduleMaster.json';
 import topicToolMapping from '../data/topicToolMapping.json';
 import moduleToolMapping from '../data/moduleToolMapping.json';
+import { getModuleDefaultTool, getTopicDefaultTool } from '../utils/getDefaultTool';
 
 export default function Step3ToolSelect({
   selectedTopic,
@@ -12,7 +13,7 @@ export default function Step3ToolSelect({
 }) {
   const topicInfo = topicToolMapping.find((t) => t.주제코드 === selectedTopic);
   const availableTools = topicInfo ? topicInfo.도구목록 : [];
-  const defaultTool = topicInfo ? topicInfo.기본Tool : '';
+  const topicDefaultTool = getTopicDefaultTool(selectedTopic);
 
   const getModuleInfo = (moduleId) =>
     moduleMaster.find((m) => m.모듈ID === moduleId);
@@ -37,16 +38,19 @@ export default function Step3ToolSelect({
 
       <div style={styles.toolInfoBox}>
         <span style={styles.toolInfoLabel}>이 주제의 기본 도구:</span>
-        <span style={styles.defaultToolBadge}>{defaultTool}</span>
-        <span style={styles.toolInfoMeta}>모듈별로 다른 도구를 선택할 수 있습니다.</span>
+        <span style={styles.defaultToolBadge}>{topicDefaultTool}</span>
+        <span style={styles.toolInfoMeta}>
+          모듈별 학습내용에 맞춰 기본 도구가 자동 지정됩니다. 필요 시 변경 가능합니다.
+        </span>
       </div>
 
       <div style={styles.moduleList}>
         {selectedModules.map((moduleId) => {
           const mod = getModuleInfo(moduleId);
           if (!mod) return null;
-          const currentTool = toolSelections[moduleId] || defaultTool;
-          const changes = currentTool !== defaultTool ? getChanges(moduleId, currentTool) : null;
+          const moduleDefaultTool = getModuleDefaultTool(moduleId, selectedTopic);
+          const currentTool = toolSelections[moduleId] || moduleDefaultTool;
+          const changes = currentTool !== moduleDefaultTool ? getChanges(moduleId, currentTool) : null;
           const hasAlt = hasAlternatives(moduleId);
 
           return (
@@ -67,7 +71,7 @@ export default function Step3ToolSelect({
                     {availableTools.map((tool) => (
                       <option key={tool} value={tool}>
                         {tool}
-                        {tool === defaultTool ? ' (기본)' : ''}
+                        {tool === moduleDefaultTool ? ' (기본)' : ''}
                       </option>
                     ))}
                   </select>

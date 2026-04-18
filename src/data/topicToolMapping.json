@@ -156,7 +156,9 @@
       "Copilot for M365",
       "Power Automate",
       "Power BI",
-      "SharePoint Copilot"
+      "SharePoint Copilot",
+      "Make",
+      "n8n"
     ],
     "기본Tool": "Copilot for M365",
     "트랙": []
@@ -185,7 +187,9 @@
       "ChatGPT",
       "LangChain",
       "LangGraph",
-      "CrewAI"
+      "CrewAI",
+      "Make",
+      "n8n"
     ],
     "기본Tool": "Cursor",
     "트랙": []
@@ -198,10 +202,8 @@
       "OpenAI API",
       "Anthropic API",
       "LangChain",
-      "LlamaIndex",
-      "Pinecone",
-      "Weaviate",
-      "HuggingFace"
+      "LangGraph",
+      "LlamaIndex"
     ],
     "기본Tool": "OpenAI API",
     "트랙": []

@@ -5,18 +5,7 @@ import Step2ModuleSelect from './components/Step2ModuleSelect';
 import Step3ToolSelect from './components/Step3ToolSelect';
 import Step4Security from './components/Step4Security';
 import Step5Result from './components/Step5Result';
-import moduleMaster from './data/moduleMaster.json';
-import topicToolMapping from './data/topicToolMapping.json';
-
-function getDefaultToolSelections(moduleIds, topicCode) {
-  const topicInfo = topicToolMapping.find((t) => t.주제코드 === topicCode);
-  const defaultTool = topicInfo ? topicInfo.기본Tool : '';
-  const selections = {};
-  moduleIds.forEach((id) => {
-    selections[id] = defaultTool;
-  });
-  return selections;
-}
+import { getModuleDefaultTool } from './utils/getDefaultTool';
 
 export default function App() {
   const [step, setStep] = useState(1);
@@ -33,9 +22,6 @@ export default function App() {
   };
 
   const handleModuleToggle = (moduleId) => {
-    const topicInfo = topicToolMapping.find((t) => t.주제코드 === selectedTopic);
-    const defaultTool = topicInfo ? topicInfo.기본Tool : '';
-
     setSelectedModules((prev) => {
       if (prev.includes(moduleId)) {
         setToolSelections((prevTools) => {
@@ -47,7 +33,7 @@ export default function App() {
       } else {
         setToolSelections((prevTools) => ({
           ...prevTools,
-          [moduleId]: defaultTool,
+          [moduleId]: getModuleDefaultTool(moduleId, selectedTopic),
         }));
         return [...prev, moduleId];
       }

@@ -1,0 +1,51 @@
+{
+  "N2D-M02": "Perplexity",
+
+  "N4A-M03": "Stable Diffusion",
+
+  "N4B-M01": "Runway",
+  "N4B-M02": "ChatGPT",
+  "N4B-M03": "Runway",
+  "N4B-M04": "Runway",
+  "N4B-M05": "Runway",
+  "N4B-M06": "Runway",
+
+  "N4C-M01": "Suno",
+  "N4C-M02": "Suno",
+  "N4C-M03": "Suno",
+  "N4C-M04": "Suno",
+  "N4C-M05": "Suno",
+
+  "N4D-M01": "Gamma",
+  "N4D-M02": "Gamma",
+  "N4D-M03": "Gamma",
+  "N4D-M04": "ChatGPT",
+  "N4D-M05": "Gamma",
+
+  "N4E-M01": "ChatGPT",
+  "N4E-M03": "Runway",
+  "N4E-M04": "ChatGPT",
+  "N4E-M05": "Suno",
+  "N4E-M07": "ChatGPT",
+
+  "N5A-M02": "Perplexity",
+  "N5A-M03": "Gemini",
+  "N5B-M03": "Perplexity",
+  "N5D-M02": "Perplexity",
+  "N5E-M04": "Perplexity",
+
+  "N6-M05": "Power Automate",
+
+  "N8-M04": "ChatGPT",
+  "N8-M06": "LangGraph",
+
+  "N9-M03": "LangChain",
+  "N9-M04": "LangGraph",
+
+  "N10-L1-M04": "Copilot",
+  "N10-L4-M01": "사내LLM",
+  "N10-L4-M02": "사내LLM",
+
+  "N11-P2-M02": "Cursor",
+  "N11-P2-M03": "Cursor"
+}
