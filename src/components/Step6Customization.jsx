@@ -177,17 +177,7 @@ export default function Step6Customization({
   const renderContentCell = (row) => {
     if (viewMode === 'customized' && customizedModules?.[row.id]) {
       const c = customizedModules[row.id];
-      return (
-        <div>
-          <div style={{ whiteSpace: 'pre-line' }}>{c.customizedContent}</div>
-          {c.customizedPracticeTopic && (
-            <div style={styles.practiceTopic}>
-              <span style={styles.practiceTopicLabel}>실습 주제 · </span>
-              {c.customizedPracticeTopic}
-            </div>
-          )}
-        </div>
-      );
+      return <div style={{ whiteSpace: 'pre-line' }}>{c.customizedContent}</div>;
     }
     return <div style={{ whiteSpace: 'pre-line' }}>{row.originalContent}</div>;
   };
@@ -198,9 +188,7 @@ export default function Step6Customization({
       .map((r) => {
         let content = r.originalContent;
         if (viewMode === 'customized' && customizedModules?.[r.id]) {
-          const c = customizedModules[r.id];
-          content = c.customizedContent;
-          if (c.customizedPracticeTopic) content += `\n[실습 주제] ${c.customizedPracticeTopic}`;
+          content = customizedModules[r.id].customizedContent;
         }
         return [r.순서, r.모듈명, content.replace(/\n/g, ' '), formatHours(r.시수), r.Tool, r.비고].join('\t');
       })
@@ -540,15 +528,6 @@ const styles = {
     fontWeight: 600,
     whiteSpace: 'nowrap',
   },
-  practiceTopic: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTop: '1px dashed #e5e7eb',
-    fontSize: 12,
-    color: '#4b5563',
-    lineHeight: 1.5,
-  },
-  practiceTopicLabel: { color: '#1f3864', fontWeight: 700 },
   regenOneBtn: {
     background: '#f3f4f6',
     color: '#374151',
