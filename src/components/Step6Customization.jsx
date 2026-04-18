@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import moduleMaster from '../data/moduleMaster.json';
 import topics from '../data/topics.json';
 import { getModuleDefaultTool } from '../utils/getDefaultTool';
@@ -23,6 +23,29 @@ export default function Step6Customization({
   const [error, setError] = useState(null);
   const [regeneratingId, setRegeneratingId] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const cooldownIntervalRef = useRef(null);
+
+  useEffect(() => {
+    if (cooldown <= 0) {
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current);
+        cooldownIntervalRef.current = null;
+      }
+      return;
+    }
+    if (!cooldownIntervalRef.current) {
+      cooldownIntervalRef.current = setInterval(() => {
+        setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current);
+        cooldownIntervalRef.current = null;
+      }
+    };
+  }, [cooldown]);
 
   const topicMeta = topics.find((t) => t.코드 === selectedTopic);
 
@@ -96,17 +119,28 @@ export default function Step6Customization({
 
     if (!res.ok) {
       let msg = `서버 오류 (${res.status})`;
+      let retryAfter = 0;
       try {
         const j = await res.json();
         if (j.error) msg = j.error;
+        if (j.retryAfter) retryAfter = j.retryAfter;
       } catch {}
-      throw new Error(msg);
+      const err = new Error(msg);
+      err.retryAfter = retryAfter;
+      throw err;
     }
     return res.json();
   };
 
+  const handleErr = (err) => {
+    setError(err.message);
+    if (err.retryAfter && err.retryAfter > 0) {
+      setCooldown(err.retryAfter);
+    }
+  };
+
   const handleGenerate = async () => {
-    if (!inputsValid || loading) return;
+    if (!inputsValid || loading || cooldown > 0) return;
     setError(null);
     setLoading(true);
     try {
@@ -116,14 +150,14 @@ export default function Step6Customization({
       setCustomizedModules(map);
       setViewMode('customized');
     } catch (err) {
-      setError(err.message);
+      handleErr(err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleRegenerateOne = async (moduleId) => {
-    if (regeneratingId) return;
+    if (regeneratingId || cooldown > 0) return;
     setError(null);
     setRegeneratingId(moduleId);
     try {
@@ -152,14 +186,14 @@ export default function Step6Customization({
         setCustomizedModules({ ...customizedModules, [moduleId]: updated });
       }
     } catch (err) {
-      setError(err.message);
+      handleErr(err);
     } finally {
       setRegeneratingId(null);
     }
   };
 
   const handleRegenerateAll = async () => {
-    if (loading) return;
+    if (loading || cooldown > 0) return;
     setError(null);
     setLoading(true);
     try {
@@ -168,7 +202,7 @@ export default function Step6Customization({
       for (const m of data.customizedModules) map[m.id] = m;
       setCustomizedModules(map);
     } catch (err) {
-      setError(err.message);
+      handleErr(err);
     } finally {
       setLoading(false);
     }
@@ -278,14 +312,20 @@ export default function Step6Customization({
         <div style={styles.formActions}>
           <button
             onClick={handleGenerate}
-            disabled={!inputsValid || loading}
+            disabled={!inputsValid || loading || cooldown > 0}
             style={{
               ...styles.generateBtn,
-              opacity: !inputsValid || loading ? 0.5 : 1,
-              cursor: !inputsValid || loading ? 'not-allowed' : 'pointer',
+              opacity: !inputsValid || loading || cooldown > 0 ? 0.5 : 1,
+              cursor: !inputsValid || loading || cooldown > 0 ? 'not-allowed' : 'pointer',
             }}
           >
-            {loading ? '맞춤 커리큘럼 생성 중…' : hasCustomized ? '맞춤 커리큘럼 재생성' : '맞춤 커리큘럼 생성'}
+            {loading
+              ? '맞춤 커리큘럼 생성 중…'
+              : cooldown > 0
+                ? `${cooldown}초 후 재시도 가능`
+                : hasCustomized
+                  ? '맞춤 커리큘럼 재생성'
+                  : '맞춤 커리큘럼 생성'}
           </button>
         </div>
 
@@ -316,8 +356,16 @@ export default function Step6Customization({
                 맞춤
               </button>
             </div>
-            <button style={styles.regenAllBtn} onClick={handleRegenerateAll} disabled={loading}>
-              전체 재생성
+            <button
+              style={{
+                ...styles.regenAllBtn,
+                opacity: loading || cooldown > 0 ? 0.5 : 1,
+                cursor: loading || cooldown > 0 ? 'not-allowed' : 'pointer',
+              }}
+              onClick={handleRegenerateAll}
+              disabled={loading || cooldown > 0}
+            >
+              {cooldown > 0 ? `${cooldown}초 대기` : '전체 재생성'}
             </button>
           </div>
 
@@ -359,13 +407,14 @@ export default function Step6Customization({
                       <button
                         style={{
                           ...styles.regenOneBtn,
-                          opacity: regeneratingId === row.id ? 0.5 : 1,
+                          opacity: regeneratingId === row.id || cooldown > 0 ? 0.5 : 1,
+                          cursor: regeneratingId === row.id || cooldown > 0 || loading ? 'not-allowed' : 'pointer',
                         }}
                         onClick={() => handleRegenerateOne(row.id)}
-                        disabled={regeneratingId === row.id || loading}
+                        disabled={regeneratingId === row.id || loading || cooldown > 0}
                         title="이 모듈만 다시 생성"
                       >
-                        {regeneratingId === row.id ? '생성 중…' : '재생성'}
+                        {regeneratingId === row.id ? '생성 중…' : cooldown > 0 ? `${cooldown}s` : '재생성'}
                       </button>
                     </td>
                   </tr>

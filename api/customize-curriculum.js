@@ -263,26 +263,46 @@ export default async function handler(req, res) {
 
   const userPrompt = buildBatchPrompt({ company, role, level, audience, topicCode, topicName, modules });
 
-  const started = Date.now();
-  let response;
-  try {
-    response = await fetch(GROQ_ENDPOINT, {
+  const requestBody = JSON.stringify({
+    model: MODEL,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: userPrompt },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.4,
+    max_tokens: 8192,
+  });
+
+  const callGroq = async () =>
+    fetch(GROQ_ENDPOINT, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         authorization: `Bearer ${API_KEY}`,
       },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userPrompt },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.4,
-        max_tokens: 8192,
-      }),
+      body: requestBody,
     });
+
+  const parseGroqRetrySec = (text) => {
+    const m = text.match(/try again in (\d+(?:\.\d+)?)\s*s/);
+    return m ? parseFloat(m[1]) : null;
+  };
+
+  const started = Date.now();
+  let response;
+  try {
+    response = await callGroq();
+    if (response.status === 429) {
+      const errText = await response.clone().text();
+      const hintSec = parseGroqRetrySec(errText);
+      if (hintSec !== null && hintSec <= 4) {
+        const waitMs = Math.ceil((hintSec + 0.5) * 1000);
+        console.log(`[customize-curriculum] 429 received, auto-retrying after ${waitMs}ms`);
+        await new Promise((r) => setTimeout(r, waitMs));
+        response = await callGroq();
+      }
+    }
   } catch (err) {
     console.error('[customize-curriculum] network error:', err);
     return res.status(502).json({ error: 'Upstream network error' });
@@ -292,9 +312,11 @@ export default async function handler(req, res) {
     const errBody = await response.text();
     console.error(`[customize-curriculum] Groq API ${response.status}:`, errBody);
     if (response.status === 429) {
+      const hintSec = parseGroqRetrySec(errBody);
+      const retryAfter = hintSec !== null ? Math.ceil(hintSec + 1) : 60;
       return res.status(429).json({
-        error: 'Rate limit. Please retry in a few seconds.',
-        retryAfter: 10,
+        error: `요청이 많아 잠시 대기가 필요합니다. ${retryAfter}초 후 다시 시도해주세요.`,
+        retryAfter,
       });
     }
     return res.status(502).json({ error: 'Upstream API error', status: response.status });
