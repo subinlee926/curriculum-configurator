@@ -261,104 +261,146 @@ export default async function handler(req, res) {
     });
   }
 
-  const userPrompt = buildBatchPrompt({ company, role, level, audience, topicCode, topicName, modules });
-
-  const requestBody = JSON.stringify({
-    model: MODEL,
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: userPrompt },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.4,
-    max_tokens: 8192,
-  });
-
-  const callGroq = async () =>
-    fetch(GROQ_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${API_KEY}`,
-      },
-      body: requestBody,
-    });
+  const BATCH_SIZE = 5;
+  const batches = [];
+  for (let i = 0; i < modules.length; i += BATCH_SIZE) {
+    batches.push(modules.slice(i, i + BATCH_SIZE));
+  }
+  console.log(`[customize-curriculum] ${modules.length} modules → ${batches.length} batch(es) of up to ${BATCH_SIZE}`);
 
   const parseGroqRetrySec = (text) => {
     const m = text.match(/try again in (\d+(?:\.\d+)?)\s*s/);
     return m ? parseFloat(m[1]) : null;
   };
 
-  const started = Date.now();
-  let response;
-  try {
-    response = await callGroq();
-    if (response.status === 429) {
-      const errText = await response.clone().text();
+  const callGroqForBatch = async (batchModules) => {
+    const userPrompt = buildBatchPrompt({
+      company,
+      role,
+      level,
+      audience,
+      topicCode,
+      topicName,
+      modules: batchModules,
+    });
+
+    const requestBody = JSON.stringify({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.4,
+      max_tokens: 4096,
+    });
+
+    const doFetch = () =>
+      fetch(GROQ_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${API_KEY}`,
+        },
+        body: requestBody,
+      });
+
+    let resp = await doFetch();
+    if (resp.status === 429) {
+      const errText = await resp.clone().text();
       const hintSec = parseGroqRetrySec(errText);
       if (hintSec !== null && hintSec <= 4) {
         const waitMs = Math.ceil((hintSec + 0.5) * 1000);
-        console.log(`[customize-curriculum] 429 received, auto-retrying after ${waitMs}ms`);
+        console.log(`[customize-curriculum] 429 on batch, auto-retry in ${waitMs}ms`);
         await new Promise((r) => setTimeout(r, waitMs));
-        response = await callGroq();
+        resp = await doFetch();
       }
     }
-  } catch (err) {
-    console.error('[customize-curriculum] network error:', err);
-    return res.status(502).json({ error: 'Upstream network error' });
-  }
+    return resp;
+  };
 
-  if (!response.ok) {
-    const errBody = await response.text();
-    console.error(`[customize-curriculum] Groq API ${response.status}:`, errBody);
-    if (response.status === 429) {
-      const hintSec = parseGroqRetrySec(errBody);
-      const retryAfter = hintSec !== null ? Math.ceil(hintSec + 1) : 60;
-      return res.status(429).json({
-        error: `요청이 많아 잠시 대기가 필요합니다. ${retryAfter}초 후 다시 시도해주세요.`,
-        retryAfter,
-      });
+  const started = Date.now();
+  const allModules = [];
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+    let resp;
+    try {
+      resp = await callGroqForBatch(batch);
+    } catch (err) {
+      console.error(`[customize-curriculum] network error on batch ${i + 1}/${batches.length}:`, err);
+      return res.status(502).json({ error: '네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' });
     }
-    return res.status(502).json({ error: 'Upstream API error', status: response.status });
+
+    if (!resp.ok) {
+      const errBody = await resp.text();
+      console.error(`[customize-curriculum] Groq ${resp.status} on batch ${i + 1}/${batches.length}:`, errBody);
+      if (resp.status === 429) {
+        const hintSec = parseGroqRetrySec(errBody);
+        const retryAfter = hintSec !== null ? Math.ceil(hintSec + 1) : 60;
+        return res.status(429).json({
+          error: `요청이 많아 잠시 대기가 필요합니다. ${retryAfter}초 후 다시 시도해주세요.`,
+          retryAfter,
+          partialProgress: allModules.length,
+        });
+      }
+      return res.status(502).json({ error: 'AI 서비스 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', status: resp.status });
+    }
+
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      console.error(`[customize-curriculum] empty content on batch ${i + 1}:`, JSON.stringify(data));
+      return res.status(502).json({ error: 'AI가 빈 응답을 반환했습니다. 다시 시도해주세요.' });
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(content);
+    } catch (e) {
+      console.error(`[customize-curriculum] JSON parse failed on batch ${i + 1}:`, content);
+      return res.status(502).json({ error: 'AI 응답 형식 오류입니다. 다시 시도해주세요.' });
+    }
+    if (!Array.isArray(parsed.modules)) {
+      console.error(`[customize-curriculum] missing modules array on batch ${i + 1}:`, parsed);
+      return res.status(502).json({ error: 'AI 응답 구조 오류입니다. 다시 시도해주세요.' });
+    }
+
+    allModules.push(...parsed.modules);
+    totalInputTokens += data.usage?.prompt_tokens ?? 0;
+    totalOutputTokens += data.usage?.completion_tokens ?? 0;
+
+    if (i < batches.length - 1) {
+      await new Promise((r) => setTimeout(r, 300));
+    }
   }
 
-  const data = await response.json();
   const elapsed = Date.now() - started;
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) {
-    console.error('[customize-curriculum] empty content:', JSON.stringify(data));
-    return res.status(502).json({ error: 'Empty response from LLM' });
-  }
 
-  let parsed;
-  try {
-    parsed = JSON.parse(content);
-  } catch (e) {
-    console.error('[customize-curriculum] JSON parse failed:', content);
-    return res.status(502).json({ error: 'LLM returned invalid JSON' });
-  }
-
-  if (!Array.isArray(parsed.modules)) {
-    console.error('[customize-curriculum] missing modules array:', parsed);
-    return res.status(502).json({ error: 'LLM response missing modules array' });
-  }
-
-  // Detector 결과는 서버 로그에만 기록 (UI 미노출)
-  const detectorReport = runDetectors(parsed.modules, modules, company);
+  const detectorReport = runDetectors(allModules, modules, company);
   if (detectorReport.length > 0) {
     console.warn(
-      '[customize-curriculum] quality issues detected:',
-      JSON.stringify({ company, role, elapsedMs: elapsed, report: detectorReport }, null, 2)
+      '[customize-curriculum] quality issues:',
+      JSON.stringify({ company, role, elapsedMs: elapsed, batches: batches.length, report: detectorReport }, null, 2)
     );
   } else {
     console.log(
       '[customize-curriculum] OK:',
-      JSON.stringify({ company, role, moduleCount: modules.length, elapsedMs: elapsed, tokens: data.usage })
+      JSON.stringify({
+        company,
+        role,
+        moduleCount: modules.length,
+        batches: batches.length,
+        elapsedMs: elapsed,
+        tokens: { input: totalInputTokens, output: totalOutputTokens },
+      })
     );
   }
 
   return res.status(200).json({
-    customizedModules: parsed.modules,
+    customizedModules: allModules,
     elapsedMs: elapsed,
   });
 }
