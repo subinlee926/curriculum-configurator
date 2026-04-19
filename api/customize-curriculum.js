@@ -265,6 +265,69 @@ function stripCodeFence(text) {
   return trimmed.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim();
 }
 
+// Sonnet 4.6가 customizedContent 내부 인용구를 escape 없이 생성하는 케이스를
+// 구제하는 state-machine 기반 복구 함수.
+// JSON을 한 글자씩 훑으면서 문자열 내부에 있다고 판단되는 " 를 \" 로 교체한다.
+// 문자열 종료 판단: 따옴표 직후 (whitespace 후) 오는 문자가 : , } ] 중 하나이면 종료.
+function repairJsonStrings(text) {
+  const out = [];
+  let inString = false;
+  let escape = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+
+    if (escape) {
+      out.push(ch);
+      escape = false;
+      continue;
+    }
+
+    if (ch === '\\') {
+      out.push(ch);
+      escape = true;
+      continue;
+    }
+
+    if (ch !== '"') {
+      out.push(ch);
+      continue;
+    }
+
+    // ch === '"'
+    if (!inString) {
+      // 문자열 시작
+      inString = true;
+      out.push(ch);
+      continue;
+    }
+
+    // 문자열 종료 후보: 다음 비공백 문자 확인
+    let j = i + 1;
+    while (j < text.length && /\s/.test(text[j])) j++;
+    const next = text[j];
+    if (next === ':' || next === ',' || next === '}' || next === ']' || next === undefined) {
+      // 진짜 문자열 종료
+      inString = false;
+      out.push(ch);
+    } else {
+      // 문자열 내부의 unescaped " — escape 처리
+      out.push('\\"');
+    }
+  }
+
+  return out.join('');
+}
+
+function parseModelJson(text) {
+  try {
+    return { parsed: JSON.parse(text), repaired: false };
+  } catch {
+    const repaired = repairJsonStrings(text);
+    return { parsed: JSON.parse(repaired), repaired: true };
+  }
+}
+
 // ====================================================================
 // Anthropic 클라이언트 (모듈 레벨 — Vercel이 ANTHROPIC_API_KEY 자동 주입)
 // ====================================================================
@@ -411,11 +474,17 @@ export default async function handler(req, res) {
     const content = stripCodeFence(rawContent);
 
     let parsed;
+    let wasRepaired = false;
     try {
-      parsed = JSON.parse(content);
+      const result = parseModelJson(content);
+      parsed = result.parsed;
+      wasRepaired = result.repaired;
     } catch (e) {
-      console.error(`[customize-curriculum] JSON parse failed on batch ${i + 1}:`, content);
+      console.error(`[customize-curriculum] JSON parse failed on batch ${i + 1} (repair also failed):`, content);
       return res.status(502).json({ error: 'AI 응답 형식 오류입니다. 다시 시도해주세요.' });
+    }
+    if (wasRepaired) {
+      console.warn(`[customize-curriculum] JSON repaired via repairJsonStrings on batch ${i + 1} (company=${company}, role=${role})`);
     }
     if (!Array.isArray(parsed.modules)) {
       console.error(`[customize-curriculum] missing modules array on batch ${i + 1}:`, parsed);
