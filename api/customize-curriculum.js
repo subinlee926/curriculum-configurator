@@ -334,7 +334,7 @@ function parseModelJson(text) {
 const client = new Anthropic();
 
 // 배포 버전 식별자 (Vercel 캐시 이슈 진단용)
-const APP_VERSION = 'v4-repair-enabled';
+const APP_VERSION = 'v5-no-output-config';
 
 // ====================================================================
 // 핸들러
@@ -400,34 +400,10 @@ export default async function handler(req, res) {
         },
       ],
       messages: [{ role: 'user', content: userPrompt }],
-      // Structured Outputs: 모델 레벨에서 JSON 문법 유효성을 강제.
-      // customizedContent 문자열 내부의 escape 누락·잘린 JSON·preamble 등
-      // 전반적인 파싱 실패 케이스를 원천 차단함.
-      output_config: {
-        format: {
-          type: 'json_schema',
-          name: 'customized_modules',
-          schema: {
-            type: 'object',
-            properties: {
-              modules: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'string' },
-                    customizedContent: { type: 'string' },
-                  },
-                  required: ['id', 'customizedContent'],
-                  additionalProperties: false,
-                },
-              },
-            },
-            required: ['modules'],
-            additionalProperties: false,
-          },
-        },
-      },
+      // NOTE: output_config.format (Structured Outputs) 시도했으나
+      // 현재 Anthropic API 스키마에서 'output_config.format.name' 필드가
+      // 허용되지 않아 400 에러 발생. 대신 A(프롬프트 규칙) + C(repairJsonStrings)
+      // 조합으로 JSON 문법 유효성을 방어한다.
     });
   };
 
