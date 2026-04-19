@@ -25,11 +25,15 @@ export default function App() {
   const [customization, setCustomization] = useState(DEFAULT_CUSTOMIZATION);
   const [customizedModules, setCustomizedModules] = useState(null);
   const [viewMode, setViewMode] = useState('original');
+  // Tool 기반 재작성 결과 (moduleId → {rewrittenContent, toolAtRewrite})
+  // toolAtRewrite는 재작성 당시의 Tool이며, 현재 toolSelections와 다르면 stale 처리
+  const [toolRewrittenContent, setToolRewrittenContent] = useState({});
 
   const handleTopicSelect = (topicCode) => {
     setSelectedTopic(topicCode);
     setSelectedModules([]);
     setToolSelections({});
+    setToolRewrittenContent({});
   };
 
   const handleModuleToggle = (moduleId) => {
@@ -37,6 +41,12 @@ export default function App() {
       if (prev.includes(moduleId)) {
         setToolSelections((prevTools) => {
           const copy = { ...prevTools };
+          delete copy[moduleId];
+          return copy;
+        });
+        // 제거된 모듈의 재작성 결과도 함께 정리
+        setToolRewrittenContent((prev) => {
+          const copy = { ...prev };
           delete copy[moduleId];
           return copy;
         });
@@ -53,6 +63,13 @@ export default function App() {
 
   const handleToolChange = (moduleId, tool) => {
     setToolSelections((prev) => ({ ...prev, [moduleId]: tool }));
+    // Tool 변경 시 해당 모듈의 재작성 결과 invalidate
+    setToolRewrittenContent((prev) => {
+      if (!prev[moduleId]) return prev;
+      const copy = { ...prev };
+      delete copy[moduleId];
+      return copy;
+    });
   };
 
   const handleTagsDetected = useCallback((tags, _keywords) => {
@@ -69,6 +86,7 @@ export default function App() {
     setCustomization(DEFAULT_CUSTOMIZATION);
     setCustomizedModules(null);
     setViewMode('original');
+    setToolRewrittenContent({});
   };
 
   return (
@@ -116,6 +134,8 @@ export default function App() {
               selectedModules={selectedModules}
               toolSelections={toolSelections}
               onToolChange={handleToolChange}
+              toolRewrittenContent={toolRewrittenContent}
+              setToolRewrittenContent={setToolRewrittenContent}
               onBack={() => setStep(2)}
               onNext={() => setStep(4)}
             />
@@ -139,6 +159,7 @@ export default function App() {
               toolSelections={toolSelections}
               detectedTags={detectedTags}
               securityText={securityText}
+              toolRewrittenContent={toolRewrittenContent}
               onBack={() => setStep(4)}
               onNext={() => setStep(6)}
               onReset={handleReset}
@@ -156,6 +177,7 @@ export default function App() {
               setCustomizedModules={setCustomizedModules}
               viewMode={viewMode}
               setViewMode={setViewMode}
+              toolRewrittenContent={toolRewrittenContent}
               onBack={() => setStep(5)}
               onReset={handleReset}
             />

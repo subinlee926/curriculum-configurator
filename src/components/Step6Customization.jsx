@@ -16,6 +16,7 @@ export default function Step6Customization({
   setCustomizedModules,
   viewMode,
   setViewMode,
+  toolRewrittenContent,
   onBack,
   onReset,
 }) {
@@ -55,6 +56,14 @@ export default function Step6Customization({
       if (!mod) return null;
       const tool = toolSelections[moduleId] || getModuleDefaultTool(moduleId, selectedTopic);
 
+      // Tool 재작성 결과가 현재 Tool 기준으로 유효하면 그것을 원본으로 사용.
+      // 고객사 맞춤은 이 "Tool 기준으로 통일된 내용"을 input으로 받아 회사/직무 맥락을 입힘.
+      const rewritten = toolRewrittenContent?.[moduleId];
+      const effectiveOriginalContent =
+        rewritten && rewritten.toolAtRewrite === tool
+          ? rewritten.rewrittenContent
+          : (mod.학습내용 || mod.학습내용키워드 || '—');
+
       const notes = [];
       detectedTags.forEach((tag) => {
         if (tag.효과.제외Tool.includes(tool)) {
@@ -67,7 +76,7 @@ export default function Step6Customization({
         순서: idx + 1,
         id: moduleId,
         모듈명: mod.모듈명,
-        originalContent: mod.학습내용 || mod.학습내용키워드 || '—',
+        originalContent: effectiveOriginalContent,
         시수: mod.기본시수,
         Tool: tool,
         난이도: mod.난이도,

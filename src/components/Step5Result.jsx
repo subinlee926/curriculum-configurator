@@ -9,6 +9,7 @@ export default function Step5Result({
   toolSelections,
   detectedTags,
   securityText,
+  toolRewrittenContent,
   onBack,
   onNext,
   onReset,
@@ -22,6 +23,13 @@ export default function Step5Result({
     if (!mod) return null;
     const tool = toolSelections[moduleId] || getModuleDefaultTool(moduleId, selectedTopic);
 
+    // Tool 기반 재작성된 내용이 현재 Tool과 일치하면 우선 사용, 아니면 원본
+    const rewritten = toolRewrittenContent?.[moduleId];
+    const contentText =
+      rewritten && rewritten.toolAtRewrite === tool
+        ? rewritten.rewrittenContent
+        : (mod.학습내용 || mod.학습내용키워드 || '—');
+
     // Build 비고 based on detected tags
     const notes = [];
     detectedTags.forEach((tag) => {
@@ -34,7 +42,7 @@ export default function Step5Result({
     return {
       순서: idx + 1,
       모듈명: mod.모듈명,
-      학습내용: mod.학습내용 || mod.학습내용키워드 || '—',
+      학습내용: contentText,
       시수: mod.기본시수,
       Tool: tool,
       비고: notes.join(' / ') || '—',
