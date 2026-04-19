@@ -1,5 +1,6 @@
-const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.3-70b-versatile';
+import Anthropic from '@anthropic-ai/sdk';
+
+const MODEL = 'claude-sonnet-4-6';
 
 const SYSTEM_PROMPT = `당신은 기업 AI 교육 커리큘럼을 특정 고객사·직무 맥락에 맞게 재작성하는 전문 기획자입니다. 반드시 JSON 형식으로 응답합니다.
 
@@ -177,7 +178,7 @@ ${moduleBlocks}
 }
 
 modules 배열에는 입력된 ${modules.length}개 모듈에 대한 재작성 결과가 모두 포함되어야 합니다.
-JSON 외 다른 설명·서문·후기를 절대 출력하지 마세요.`;
+JSON 외 다른 설명·서문·후기를 절대 출력하지 마세요. Markdown 코드 펜스(\`\`\`)로 감싸지 마세요.`;
 }
 
 // ====================================================================
@@ -237,6 +238,17 @@ function runDetectors(parsedModules, originalModules, company) {
   return report;
 }
 
+function stripCodeFence(text) {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith('```')) return trimmed;
+  return trimmed.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim();
+}
+
+// ====================================================================
+// Anthropic 클라이언트 (모듈 레벨 — Vercel이 ANTHROPIC_API_KEY 자동 주입)
+// ====================================================================
+const client = new Anthropic();
+
 // ====================================================================
 // 핸들러
 // ====================================================================
@@ -246,9 +258,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const API_KEY = process.env.GROQ_API_KEY;
-  if (!API_KEY) {
-    console.error('[customize-curriculum] GROQ_API_KEY not configured');
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error('[customize-curriculum] ANTHROPIC_API_KEY not configured');
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
@@ -261,10 +272,8 @@ export default async function handler(req, res) {
     });
   }
 
-  // 시스템 프롬프트가 약 3,400 토큰이라 배치 분할은 오히려 비효율적이다
-  // (모든 배치에 시스템 프롬프트가 복제되어 TPM 윈도우를 빠르게 소진)
-  // 11개 이하는 단일 호출로 3,400 + 11*750 = 11,650 토큰 — 12,000 TPM 내에 안전
-  // 12개 이상일 때만 분할 (이 경우 partial failure 가능성 있음, 에러 메시지로 안내)
+  // 시스템 프롬프트 캐싱으로 중복 전송 비용은 해결되지만, latency 관점에서 단일 호출이 여전히 유리.
+  // 11개 이하는 단일 호출, 12개 이상만 분할.
   const SINGLE_CALL_THRESHOLD = 11;
   const batches = [];
   if (modules.length <= SINGLE_CALL_THRESHOLD) {
@@ -276,24 +285,7 @@ export default async function handler(req, res) {
   }
   console.log(`[customize-curriculum] ${modules.length} modules → ${batches.length} batch(es) (threshold: single call ≤${SINGLE_CALL_THRESHOLD})`);
 
-  const parseGroqRetrySec = (text) => {
-    // TPD: "try again in 46m28.128s" / TPM: "try again in 1.5s" / 혼합: "2m10s"
-    const m = text.match(/try again in\s+(?:(\d+)\s*m)?\s*(\d+(?:\.\d+)?)\s*s/);
-    if (!m) return null;
-    const mins = m[1] ? parseInt(m[1], 10) : 0;
-    const secs = parseFloat(m[2]);
-    return mins * 60 + secs;
-  };
-
-  const detectLimitKind = (text) => {
-    if (/tokens?\s+per\s+day|TPD/i.test(text)) return 'TPD';
-    if (/tokens?\s+per\s+minute|TPM/i.test(text)) return 'TPM';
-    if (/requests?\s+per\s+day|RPD/i.test(text)) return 'RPD';
-    if (/requests?\s+per\s+minute|RPM/i.test(text)) return 'RPM';
-    return 'UNKNOWN';
-  };
-
-  const callGroqForBatch = async (batchModules) => {
+  const callClaudeForBatch = async (batchModules) => {
     const userPrompt = buildBatchPrompt({
       company,
       role,
@@ -307,91 +299,67 @@ export default async function handler(req, res) {
     // max_tokens: 모듈 수에 비례 (모듈당 약 500 토큰 여유 + 최소 1024)
     const adaptiveMaxTokens = Math.min(8192, Math.max(1024, batchModules.length * 500 + 600));
 
-    const requestBody = JSON.stringify({
+    return await client.messages.create({
       model: MODEL,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userPrompt },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.4,
       max_tokens: adaptiveMaxTokens,
-    });
-
-    const doFetch = () =>
-      fetch(GROQ_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${API_KEY}`,
+      temperature: 0.4,
+      system: [
+        {
+          type: 'text',
+          text: SYSTEM_PROMPT,
+          cache_control: { type: 'ephemeral' },
         },
-        body: requestBody,
-      });
-
-    let resp = await doFetch();
-    if (resp.status === 429) {
-      const errText = await resp.clone().text();
-      const hintSec = parseGroqRetrySec(errText);
-      if (hintSec !== null && hintSec <= 4) {
-        const waitMs = Math.ceil((hintSec + 0.5) * 1000);
-        console.log(`[customize-curriculum] 429 on batch, auto-retry in ${waitMs}ms`);
-        await new Promise((r) => setTimeout(r, waitMs));
-        resp = await doFetch();
-      }
-    }
-    return resp;
+      ],
+      messages: [{ role: 'user', content: userPrompt }],
+    });
   };
 
   const started = Date.now();
   const allModules = [];
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
+  let totalCacheReadTokens = 0;
+  let totalCacheWriteTokens = 0;
 
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
-    let resp;
+    let response;
     try {
-      resp = await callGroqForBatch(batch);
+      response = await callClaudeForBatch(batch);
     } catch (err) {
+      if (err instanceof Anthropic.RateLimitError) {
+        const retryAfter = Number(err.headers?.['retry-after'] ?? 60);
+        console.error(`[customize-curriculum] rate limit on batch ${i + 1}/${batches.length}, retry after ${retryAfter}s`);
+        return res.status(429).json({
+          error: `요청이 많아 잠시 대기가 필요합니다. ${retryAfter}초 후 다시 시도해주세요.`,
+          retryAfter,
+          partialProgress: allModules.length,
+        });
+      }
+      if (err instanceof Anthropic.AuthenticationError) {
+        console.error('[customize-curriculum] authentication error:', err.message);
+        return res.status(500).json({ error: 'AI 인증 오류가 발생했습니다. 관리자에게 문의해주세요.' });
+      }
+      if (err instanceof Anthropic.BadRequestError) {
+        console.error(`[customize-curriculum] bad request on batch ${i + 1}:`, err.message);
+        return res.status(400).json({ error: '요청 형식 오류가 발생했습니다.' });
+      }
+      if (err instanceof Anthropic.APIError) {
+        console.error(`[customize-curriculum] API error ${err.status} on batch ${i + 1}:`, err.message);
+        return res.status(502).json({ error: 'AI 서비스 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' });
+      }
       console.error(`[customize-curriculum] network error on batch ${i + 1}/${batches.length}:`, err);
       return res.status(502).json({ error: '네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' });
     }
 
-    if (!resp.ok) {
-      const errBody = await resp.text();
-      console.error(`[customize-curriculum] Groq ${resp.status} on batch ${i + 1}/${batches.length}:`, errBody);
-      if (resp.status === 429) {
-        const hintSec = parseGroqRetrySec(errBody);
-        const limitKind = detectLimitKind(errBody);
-        const retryAfter = hintSec !== null ? Math.ceil(hintSec + 1) : 60;
-
-        let userMessage;
-        if (limitKind === 'TPD' || limitKind === 'RPD') {
-          const mins = Math.ceil(retryAfter / 60);
-          userMessage =
-            hintSec !== null && mins >= 2
-              ? `오늘 AI 일일 사용 한도에 도달했습니다. 약 ${mins}분 후 또는 내일 다시 시도해주세요.`
-              : '오늘 AI 일일 사용 한도에 도달했습니다. 내일 다시 시도해주세요.';
-        } else {
-          userMessage = `요청이 많아 잠시 대기가 필요합니다. ${retryAfter}초 후 다시 시도해주세요.`;
-        }
-
-        return res.status(429).json({
-          error: userMessage,
-          retryAfter,
-          limitKind,
-          partialProgress: allModules.length,
-        });
-      }
-      return res.status(502).json({ error: 'AI 서비스 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', status: resp.status });
-    }
-
-    const data = await resp.json();
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) {
-      console.error(`[customize-curriculum] empty content on batch ${i + 1}:`, JSON.stringify(data));
+    const textBlock = response.content.find((b) => b.type === 'text');
+    const rawContent = textBlock?.text;
+    if (!rawContent) {
+      console.error(`[customize-curriculum] empty content on batch ${i + 1}:`, JSON.stringify(response));
       return res.status(502).json({ error: 'AI가 빈 응답을 반환했습니다. 다시 시도해주세요.' });
     }
+
+    const content = stripCodeFence(rawContent);
 
     let parsed;
     try {
@@ -406,8 +374,10 @@ export default async function handler(req, res) {
     }
 
     allModules.push(...parsed.modules);
-    totalInputTokens += data.usage?.prompt_tokens ?? 0;
-    totalOutputTokens += data.usage?.completion_tokens ?? 0;
+    totalInputTokens += response.usage?.input_tokens ?? 0;
+    totalOutputTokens += response.usage?.output_tokens ?? 0;
+    totalCacheReadTokens += response.usage?.cache_read_input_tokens ?? 0;
+    totalCacheWriteTokens += response.usage?.cache_creation_input_tokens ?? 0;
 
     if (i < batches.length - 1) {
       await new Promise((r) => setTimeout(r, 300));
@@ -431,7 +401,12 @@ export default async function handler(req, res) {
         moduleCount: modules.length,
         batches: batches.length,
         elapsedMs: elapsed,
-        tokens: { input: totalInputTokens, output: totalOutputTokens },
+        tokens: {
+          input: totalInputTokens,
+          output: totalOutputTokens,
+          cacheRead: totalCacheReadTokens,
+          cacheWrite: totalCacheWriteTokens,
+        },
       })
     );
   }
