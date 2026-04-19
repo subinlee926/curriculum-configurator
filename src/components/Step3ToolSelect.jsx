@@ -3,7 +3,7 @@ import moduleMaster from '../data/moduleMaster.json';
 import topics from '../data/topics.json';
 import topicToolMapping from '../data/topicToolMapping.json';
 import moduleToolMapping from '../data/moduleToolMapping.json';
-import { getModuleDefaultTool, getTopicDefaultTool } from '../utils/getDefaultTool';
+import { getModuleDefaultTool } from '../utils/getDefaultTool';
 
 export default function Step3ToolSelect({
   selectedTopic,
@@ -20,7 +20,6 @@ export default function Step3ToolSelect({
 
   const topicInfo = topicToolMapping.find((t) => t.주제코드 === selectedTopic);
   const availableTools = topicInfo ? topicInfo.도구목록 : [];
-  const topicDefaultTool = getTopicDefaultTool(selectedTopic);
   const topicMeta = topics.find((t) => t.코드 === selectedTopic);
 
   const getModuleInfo = (moduleId) =>
@@ -31,10 +30,6 @@ export default function Step3ToolSelect({
       (m) => m.모듈ID === moduleId && m.대체Tool === tool
     );
     return mapping ? mapping.변경점 : null;
-  };
-
-  const hasAlternatives = (moduleId) => {
-    return moduleToolMapping.some((m) => m.모듈ID === moduleId);
   };
 
   const handleNext = async () => {
@@ -121,14 +116,6 @@ export default function Step3ToolSelect({
         선택한 모듈별로 사용할 AI 도구를 지정합니다. 다음 단계로 넘어갈 때 학습 내용이 선택한 도구에 맞춰 자동 재작성됩니다.
       </p>
 
-      <div style={styles.toolInfoBox}>
-        <span style={styles.toolInfoLabel}>이 주제의 기본 도구:</span>
-        <span style={styles.defaultToolBadge}>{topicDefaultTool}</span>
-        <span style={styles.toolInfoMeta}>
-          모듈별 학습내용에 맞춰 기본 도구가 자동 지정됩니다. 필요 시 변경 가능합니다.
-        </span>
-      </div>
-
       <div style={styles.moduleList}>
         {selectedModules.map((moduleId) => {
           const mod = getModuleInfo(moduleId);
@@ -136,7 +123,6 @@ export default function Step3ToolSelect({
           const moduleDefaultTool = getModuleDefaultTool(moduleId, selectedTopic);
           const currentTool = toolSelections[moduleId] || moduleDefaultTool;
           const changes = currentTool !== moduleDefaultTool ? getChanges(moduleId, currentTool) : null;
-          const hasAlt = hasAlternatives(moduleId);
 
           return (
             <div key={moduleId} style={styles.moduleCard}>
@@ -160,9 +146,6 @@ export default function Step3ToolSelect({
                       </option>
                     ))}
                   </select>
-                  {!hasAlt && (
-                    <div style={styles.noAltNote}>사전 정의된 대체 규칙 없음 (AI 재작성으로 통일)</div>
-                  )}
                 </div>
               </div>
 
