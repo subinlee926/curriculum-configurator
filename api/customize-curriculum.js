@@ -332,6 +332,34 @@ export default async function handler(req, res) {
         },
       ],
       messages: [{ role: 'user', content: userPrompt }],
+      // Structured Outputs: 모델 레벨에서 JSON 문법 유효성을 강제.
+      // customizedContent 문자열 내부의 escape 누락·잘린 JSON·preamble 등
+      // 전반적인 파싱 실패 케이스를 원천 차단함.
+      output_config: {
+        format: {
+          type: 'json_schema',
+          name: 'customized_modules',
+          schema: {
+            type: 'object',
+            properties: {
+              modules: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    customizedContent: { type: 'string' },
+                  },
+                  required: ['id', 'customizedContent'],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ['modules'],
+            additionalProperties: false,
+          },
+        },
+      },
     });
   };
 
