@@ -333,10 +333,15 @@ function parseModelJson(text) {
 // ====================================================================
 const client = new Anthropic();
 
+// 배포 버전 식별자 (Vercel 캐시 이슈 진단용)
+const APP_VERSION = 'v4-repair-enabled';
+
 // ====================================================================
 // 핸들러
 // ====================================================================
 export default async function handler(req, res) {
+  console.log(`[customize-curriculum] handler invoked (version=${APP_VERSION})`);
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
