@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
 import { detectSecurityKeywords } from '../utils/detectSecurityKeywords';
 import HelpTip from './HelpTip';
+import LoadingOverlay from './LoadingOverlay';
 
 const LEVEL_OPTIONS = ['입문', '중급', '고급'];
 const HOURS_PRESETS = [4, 6, 8, 12, 16];
+
+const LITE_GENERATE_PHASES = [
+  { startSec: 0,  text: '회사·직무·툴 정보 분석 중' },
+  { startSec: 8,  text: '시수에 맞춰 모듈 구성 결정 중' },
+  { startSec: 22, text: '모듈별 학습 내용과 LD 설명 작성 중' },
+  { startSec: 45, text: '거의 다 됐어요. 마지막 검토 중' },
+];
 
 export default function BuilderLiteIntake({ initial, onAssembled, onCancel }) {
   const [form, setForm] = useState({
@@ -303,6 +311,8 @@ export default function BuilderLiteIntake({ initial, onAssembled, onCancel }) {
         </div>
 
         {error && <div style={styles.errorBanner}>{error}</div>}
+
+        <LoadingOverlay isVisible={loading} phases={LITE_GENERATE_PHASES} />
       </div>
     </div>
   );
@@ -335,6 +345,7 @@ const styles = {
     border: '1px solid #e5e7eb',
     borderRadius: 10,
     padding: '20px 22px',
+    position: 'relative', // LoadingOverlay 기준 컨테이너
   },
   formGrid: {
     display: 'grid',

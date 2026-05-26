@@ -1,1 +1,21 @@
 /* App styles are handled via inline styles in components */
+
+@keyframes configurator-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes configurator-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes configurator-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes configurator-dot-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}

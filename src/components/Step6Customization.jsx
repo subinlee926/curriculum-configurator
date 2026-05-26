@@ -2,6 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import moduleMaster from '../data/moduleMaster.json';
 import topics from '../data/topics.json';
 import { getModuleDefaultTool } from '../utils/getDefaultTool';
+import LoadingOverlay from './LoadingOverlay';
+
+const CUSTOMIZE_PHASES = [
+  { startSec: 0,  text: '회사·직무·교육 대상 맥락 분석 중' },
+  { startSec: 8,  text: '모듈별 학습 내용 재작성 중' },
+  { startSec: 20, text: 'LD 설명 산문 작성 중' },
+  { startSec: 32, text: '거의 다 됐어요. 마지막 검토 중' },
+];
 
 const LEVEL_OPTIONS = ['입문', '중급', '고급'];
 
@@ -382,6 +390,8 @@ export default function Step6Customization({
         </div>
 
         {error && <div style={styles.errorBanner}>{error}</div>}
+
+        <LoadingOverlay isVisible={loading} phases={CUSTOMIZE_PHASES} />
       </div>
 
       {/* 결과 영역 */}
@@ -438,12 +448,15 @@ export default function Step6Customization({
                 </tr>
               </thead>
               <tbody>
-                {baseRows.map((row) => (
+                {baseRows.map((row) => {
+                  const isThisRegenerating = regeneratingId === row.id;
+                  return (
                   <tr
                     key={row.순서}
                     style={{
                       ...styles.tr,
                       background: row.순서 % 2 === 0 ? '#f9fafb' : '#fff',
+                      ...(isThisRegenerating ? styles.trRegenerating : {}),
                     }}
                   >
                     <td style={{ ...styles.td, textAlign: 'center', color: '#9ca3af' }}>{row.순서}</td>
@@ -480,7 +493,8 @@ export default function Step6Customization({
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
               <tfoot>
                 <tr style={styles.tfootRow}>
@@ -566,6 +580,10 @@ const styles = {
     borderRadius: 10,
     padding: '20px 22px',
     marginBottom: 18,
+    position: 'relative', // LoadingOverlay 기준
+  },
+  tableWrapperRelative: {
+    position: 'relative',
   },
   formGrid: {
     display: 'grid',
@@ -654,6 +672,7 @@ const styles = {
     borderBottom: '2px solid #2E75B6',
   },
   tr: { borderBottom: '1px solid #e5e7eb', transition: 'background 0.1s' },
+  trRegenerating: { animation: 'configurator-pulse 1.4s ease-in-out infinite' },
   td: { padding: '10px 14px', verticalAlign: 'middle', color: '#111827' },
   moduleNameCell: { fontWeight: 500 },
   toolPill: {

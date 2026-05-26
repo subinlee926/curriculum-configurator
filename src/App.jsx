@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import './App.css';
 import StepIndicator from './components/StepIndicator';
 import Step1TopicSelect from './components/Step1TopicSelect';
 import Step2ModuleSelect from './components/Step2ModuleSelect';

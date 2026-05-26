@@ -14,6 +14,7 @@
 | 2~3 | Builder Lite v2.1 (보안 환경 입력 통합) | **배포 완료** — intake 6-field로 확장 | 2026-05-26 |
 | 2~3 | Builder Lite v2.2 (재생성 의견 반영) | **배포 완료** — 방향성 피드백 input | 2026-05-26 |
 | 2~3 | Builder Lite v2.3 (첫 사용자 가이드) | **배포 완료** — 환영 모달 + ? 아이콘 | 2026-05-26 |
+| 2~3 | v2.4 (로딩 오버레이 + 페이즈 메시지) | **배포 완료** — 활동 표시 강화 | 2026-05-26 |
 | 4~5 | #1 시수 두 세트 토글 | 보류 (Lite v2가 시수를 직접 입력받으므로 가치 감소 — 표준 모드에만 적용 검토) |  |
 | 6~7 | #3 Factcheck 배치 | 보류 |  |
 
@@ -126,6 +127,29 @@ v1 (M4 후보 카드 단계 포함)을 사용자 검토 후 다음 3가지 문�
 **왜 ? 아이콘은 2개뿐인가**: 모든 필드에 달면 시각 노이즈만 늘고 실제로 안 봐요. **표준 SaaS에 없는 새 컨셉**(AI가 모듈 개수 결정, 의견과 제약의 우선순위)에만 한정하는 게 효과적. 회사명·직무·툴·주제처럼 자명한 필드는 placeholder만으로 충분.
 
 **localStorage 키 버전 suffix의 의미**: `-v1`을 붙여둔 덕분에 향후 큰 UI 변경 시(예: v3 출시) 키를 v2로 bump해서 기존 사용자에게도 다시 모달을 노출시킬 수 있음. 영구 dismiss 함정을 피하는 표준 패턴.
+
+### v2.4 로딩 오버레이 + 페이즈 메시지 (2026-05-26)
+
+30~60초 생성 작업 중 폼이 disabled만 되고 활동 표시가 약해서 사용자가 "프리징됐나/에러인가" 오해할 위험. **활동의 느낌**을 시각적으로 강화.
+
+**의사결정**:
+- 오버레이 범위: 카드 내부만 dim (헤더·푸터는 정상). 풀스크린은 무거움, 인라인만은 약함 — 카드 단위가 표준 SaaS 패턴
+- 페이즈 메시지: elapsed 시간 기반 4단계 rotation. fake progress 아니라 LLM 호출 내부의 추상 단계 표현 (분석 → 구성 결정 → 작성 → 검토)
+
+**구현**:
+- `src/App.css`: `@keyframes configurator-spin` (회전), `configurator-fade-in` (오버레이 등장), `configurator-pulse` (행 펄스), `configurator-dot-bounce` (3-dot loader)
+- `src/App.jsx`: App.css import 추가 (이전엔 main.jsx에서 index.css만 로드)
+- `src/components/LoadingOverlay.jsx` 신규 — absolute 위치 + 반투명 dim + 회전 spinner + elapsed 카운트 + 페이즈 메시지 자동 rotation. props: `isVisible`·`phases`·`fallbackMessage`·`compact`. 부모는 `position: relative` 필요
+- BuilderLiteIntake: formCard에 LITE_GENERATE_PHASES 4단계 적용 (0/8/22/45초)
+- Step5Result: tableWrapper에 LITE_REGEN_ALL_PHASES 적용 (전체 재생성 시) + 모듈별 재생성 행에 pulse 애니메이션
+- Step6Customization: formCard에 CUSTOMIZE_PHASES 적용 (0/8/20/32초 — customize는 generate보다 짧음) + 모듈별 재생성 행에 pulse
+
+**페이즈 메시지 디자인 원칙**:
+- 시작점만 명시(`startSec`), 종료점은 다음 phase가 자동으로 결정. 마지막 phase는 무한 지속(LLM이 지연되어도 안정적)
+- "거의 다 됐어요. 마지막 검토 중" 같은 reassurance 카피가 45초+ 응답에 들어가서 사용자 불안 완화
+- 행 단위 작업(모듈별 재생성)에는 오버레이 X — 펄스 애니메이션만으로 충분 (다른 행은 정상 보임)
+
+**왜 elapsed 시간이 아닌 startSec 기반인가**: 진짜 progress bar는 불가능(LLM 응답 시간 예측 불가). 대신 사용자가 체감하는 시간대에 맞춰 메시지가 자연스럽게 흐르는 게 핵심. 30초에 멈춰서 45초의 "마지막 검토" 메시지가 안 떠도, 사용자는 활동의 변화를 본 후니까 안심.
 
 ### 학습 — 이 재설계가 가르치는 교훈
 

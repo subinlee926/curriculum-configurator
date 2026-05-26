@@ -3,6 +3,14 @@ import moduleMaster from '../data/moduleMaster.json';
 import topics from '../data/topics.json';
 import { getModuleDefaultTool } from '../utils/getDefaultTool';
 import HelpTip from './HelpTip';
+import LoadingOverlay from './LoadingOverlay';
+
+const LITE_REGEN_ALL_PHASES = [
+  { startSec: 0,  text: '입력 분석 + 의견 반영 중' },
+  { startSec: 8,  text: '모듈 구성 다시 결정 중' },
+  { startSec: 22, text: '학습 내용과 LD 설명 새로 작성 중' },
+  { startSec: 45, text: '거의 다 됐어요. 마지막 검토 중' },
+];
 
 export default function Step5Result({
   selectedTopic,
@@ -219,6 +227,12 @@ export default function Step5Result({
 
       {/* Curriculum table */}
       <div style={styles.tableWrapper}>
+        {liteMode && (
+          <LoadingOverlay
+            isVisible={Boolean(liteRegenLoading?.all)}
+            phases={LITE_REGEN_ALL_PHASES}
+          />
+        )}
         <table style={styles.table}>
           <thead>
             <tr style={styles.thead}>
@@ -244,6 +258,7 @@ export default function Step5Result({
                   style={{
                     ...styles.tr,
                     background: row.hasWarning ? '#fff7ed' : row.순서 % 2 === 0 ? '#f9fafb' : '#fff',
+                    ...(isThisRegenerating ? styles.trRegenerating : {}),
                   }}
                 >
                   <td style={{ ...styles.td, textAlign: 'center', color: '#9ca3af' }}>{row.순서}</td>
@@ -535,6 +550,7 @@ const styles = {
     border: '1px solid #e5e7eb',
     borderRadius: 10,
     marginBottom: 16,
+    position: 'relative', // LoadingOverlay 기준 컨테이너
   },
   table: {
     width: '100%',
@@ -556,6 +572,9 @@ const styles = {
   tr: {
     borderBottom: '1px solid #e5e7eb',
     transition: 'background 0.1s',
+  },
+  trRegenerating: {
+    animation: 'configurator-pulse 1.4s ease-in-out infinite',
   },
   td: {
     padding: '10px 14px',
