@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import StepIndicator from './components/StepIndicator';
 import Step1TopicSelect from './components/Step1TopicSelect';
 import Step2ModuleSelect from './components/Step2ModuleSelect';
@@ -7,7 +7,10 @@ import Step4Security from './components/Step4Security';
 import Step5Result from './components/Step5Result';
 import Step6Customization from './components/Step6Customization';
 import BuilderLiteIntake from './components/BuilderLiteIntake';
+import WelcomeModal from './components/WelcomeModal';
 import { getModuleDefaultTool } from './utils/getDefaultTool';
+
+const ONBOARDING_KEY = 'configurator-onboarded-v1';
 
 const DEFAULT_CUSTOMIZATION = {
   company: '',
@@ -32,6 +35,28 @@ export default function App() {
   // Tool 기반 재작성 결과 (moduleId → {rewrittenContent, toolAtRewrite})
   // toolAtRewrite는 재작성 당시의 Tool이며, 현재 toolSelections와 다르면 stale 처리
   const [toolRewrittenContent, setToolRewrittenContent] = useState({});
+
+  // Welcome modal — 첫 진입 시 자동 노출 (localStorage로 기억)
+  const [showWelcome, setShowWelcome] = useState(false);
+  useEffect(() => {
+    try {
+      const seen = window.localStorage.getItem(ONBOARDING_KEY);
+      if (!seen) setShowWelcome(true);
+    } catch {
+      // localStorage 접근 실패(시크릿 모드 등) — 조용히 무시. 모달은 안 뜸.
+    }
+  }, []);
+
+  const handleWelcomeClose = () => {
+    setShowWelcome(false);
+    try {
+      window.localStorage.setItem(ONBOARDING_KEY, '1');
+    } catch {
+      // 저장 실패 — 동일 세션 내에서는 안 뜸. 다음 세션엔 다시 뜸 (무해함)
+    }
+  };
+
+  const handleShowWelcomeAgain = () => setShowWelcome(true);
 
   // Builder Lite 전용 상태
   const [liteIntake, setLiteIntake] = useState(null); // { company, role, tools, toolsText, topic, level, hours }
@@ -262,6 +287,8 @@ export default function App() {
 
   return (
     <div style={styles.appShell}>
+      {showWelcome && <WelcomeModal onClose={handleWelcomeClose} />}
+
       {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerInner}>
@@ -269,7 +296,16 @@ export default function App() {
             <div style={styles.logoText}>FastCampus B2B</div>
             <div style={styles.appTitle}>AI 커리큘럼 설정기</div>
           </div>
-          <div style={styles.headerRight}></div>
+          <div style={styles.headerRight}>
+            <button
+              type="button"
+              style={styles.guideBtn}
+              onClick={handleShowWelcomeAgain}
+              title="두 모드(표준 / 새 커리큘럼)의 차이를 다시 봅니다"
+            >
+              가이드 다시 보기
+            </button>
+          </div>
         </div>
       </header>
 
@@ -440,6 +476,17 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 10,
+  },
+  guideBtn: {
+    background: 'rgba(255,255,255,0.12)',
+    color: '#e0e7ff',
+    border: '1px solid rgba(255,255,255,0.3)',
+    borderRadius: 6,
+    padding: '6px 14px',
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'background 0.15s',
   },
   modeBadge: {
     background: '#2E75B6',

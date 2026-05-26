@@ -13,6 +13,7 @@
 | 2~3 | Builder Lite v2 (5-field + 단일 생성 + 재생성) | **배포 완료** — 새 설계 | 2026-05-26 |
 | 2~3 | Builder Lite v2.1 (보안 환경 입력 통합) | **배포 완료** — intake 6-field로 확장 | 2026-05-26 |
 | 2~3 | Builder Lite v2.2 (재생성 의견 반영) | **배포 완료** — 방향성 피드백 input | 2026-05-26 |
+| 2~3 | Builder Lite v2.3 (첫 사용자 가이드) | **배포 완료** — 환영 모달 + ? 아이콘 | 2026-05-26 |
 | 4~5 | #1 시수 두 세트 토글 | 보류 (Lite v2가 시수를 직접 입력받으므로 가치 감소 — 표준 모드에만 적용 검토) |  |
 | 6~7 | #3 Factcheck 배치 | 보류 |  |
 
@@ -106,6 +107,25 @@ v1 (M4 후보 카드 단계 포함)을 사용자 검토 후 다음 3가지 문�
 - APP_VERSION: v3→v4 (`v4-builder-lite-generate-with-feedback`)
 
 **우선순위 규칙의 의미**: "실습 시간을 더 늘려주세요"는 시수 변경을 함의할 수 있는데, 시수는 intake에서 확정되었으므로 보존. 대신 "주어진 시수 내에서 실습 비중을 늘림" 같은 해석으로 자연 적용. 보안·시수는 hard constraint, 의견은 soft signal.
+
+### v2.3 첫 사용자 가이드 (2026-05-26)
+
+처음 사용하는 LD가 표준 vs Lite 어디서 시작할지 결정에 도움 필요. 단계별 디테일이 아닌 **두 모드 분기 자체**가 첫 사용자 최대 막힘 포인트.
+
+**의사결정**:
+- 가이드 형식: 환영 모달 (첫 진입 1회) + 핵심 필드 ? 아이콘 — 인터랙티브 투어는 영업 속도 방해, 별도 가이드 페이지는 비침입적이지만 놓침
+- 커버리지: **두 모드 차이만** — 각 단계 디테일은 placeholder/subtitle로 충분, 가이드 부담 최소화
+
+**구현**:
+- `src/components/WelcomeModal.jsx` 신규 — 두 모드 use case 비교 카드, 백드롭 클릭·ESC·X·시작하기 버튼 모두 닫기. localStorage `configurator-onboarded-v1`로 첫 1회만 자동 노출
+- `src/components/HelpTip.jsx` 신규 — 재사용 ? 아이콘 + hover/click tooltip, viewport-aware placement (top/bottom/right)
+- `App.jsx`: useEffect로 localStorage 체크하여 첫 진입 시 모달 자동 노출. 헤더 우상단에 "가이드 다시 보기" 버튼 추가 — 언제든 재진입 가능
+- `BuilderLiteIntake.jsx`: "총 시수 *" 라벨 옆 ? — "시수만 입력하면 AI가 모듈 개수·구성 자동 결정"
+- `Step5Result.jsx`: "재생성 의견 (선택)" 라벨 옆 ? — "방향성 신호 + 우선순위(보안>시수>의견)"
+
+**왜 ? 아이콘은 2개뿐인가**: 모든 필드에 달면 시각 노이즈만 늘고 실제로 안 봐요. **표준 SaaS에 없는 새 컨셉**(AI가 모듈 개수 결정, 의견과 제약의 우선순위)에만 한정하는 게 효과적. 회사명·직무·툴·주제처럼 자명한 필드는 placeholder만으로 충분.
+
+**localStorage 키 버전 suffix의 의미**: `-v1`을 붙여둔 덕분에 향후 큰 UI 변경 시(예: v3 출시) 키를 v2로 bump해서 기존 사용자에게도 다시 모달을 노출시킬 수 있음. 영구 dismiss 함정을 피하는 표준 패턴.
 
 ### 학습 — 이 재설계가 가르치는 교훈
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { detectSecurityKeywords } from '../utils/detectSecurityKeywords';
+import HelpTip from './HelpTip';
 
 const LEVEL_OPTIONS = ['입문', '중급', '고급'];
 const HOURS_PRESETS = [4, 6, 8, 12, 16];
@@ -195,7 +196,13 @@ export default function BuilderLiteIntake({ initial, onAssembled, onCancel }) {
           </div>
 
           <div style={{ ...styles.field, gridColumn: '1 / -1' }}>
-            <label style={styles.label}>총 시수 *</label>
+            <label style={styles.label}>
+              총 시수 *
+              <HelpTip
+                placement="right"
+                text="시수만 입력하면 AI가 모듈 개수와 구성을 자동 결정합니다. 예) 6H는 4개, 12H는 5~6개. 모듈을 직접 고르는 게 아니라 결과를 받아보고 마음에 안 들면 [재생성 의견]으로 방향성을 줄 수 있어요."
+              />
+            </label>
             <div style={styles.hoursRow}>
               <div style={styles.presetGroup}>
                 {HOURS_PRESETS.map((preset) => {

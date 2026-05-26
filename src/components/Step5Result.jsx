@@ -2,6 +2,7 @@ import { useState } from 'react';
 import moduleMaster from '../data/moduleMaster.json';
 import topics from '../data/topics.json';
 import { getModuleDefaultTool } from '../utils/getDefaultTool';
+import HelpTip from './HelpTip';
 
 export default function Step5Result({
   selectedTopic,
@@ -152,7 +153,13 @@ export default function Step5Result({
             </button>
           </div>
           <div style={styles.feedbackRow}>
-            <label style={styles.feedbackLabel}>재생성 의견 (선택)</label>
+            <label style={styles.feedbackLabel}>
+              재생성 의견 (선택)
+              <HelpTip
+                placement="right"
+                text="결과를 보고 방향성을 남기면 AI가 그 신호에 맞춰 다시 만듭니다. 예) '실습 비중을 더 늘려주세요' / '사례 중심으로'. 우선순위는 보안 > 시수 > 의견 — 의견이 시수를 바꾸지는 않습니다."
+              />
+            </label>
             <textarea
               value={regenFeedback}
               onChange={(e) => setRegenFeedback(e.target.value)}
