@@ -10,16 +10,19 @@ export default function Step5Result({
   detectedTags,
   securityText,
   toolRewrittenContent,
+  customModules,
+  customTopicMeta,
   onBack,
+  onBackLabel,
   onNext,
   onReset,
 }) {
   const [copied, setCopied] = useState(false);
 
-  const topicMeta = topics.find((t) => t.코드 === selectedTopic);
+  const topicMeta = customTopicMeta || topics.find((t) => t.코드 === selectedTopic);
 
   const curriculumRows = selectedModules.map((moduleId, idx) => {
-    const mod = moduleMaster.find((m) => m.모듈ID === moduleId);
+    const mod = customModules?.[moduleId] || moduleMaster.find((m) => m.모듈ID === moduleId);
     if (!mod) return null;
     const tool = toolSelections[moduleId] || getModuleDefaultTool(moduleId, selectedTopic);
 
@@ -199,7 +202,7 @@ export default function Step5Result({
 
       <div style={styles.footer}>
         <button style={styles.backBtn} onClick={onBack}>
-          이전 (보안 환경 수정)
+          {onBackLabel || '이전 (보안 환경 수정)'}
         </button>
         <div style={{ display: 'flex', gap: 10 }}>
           <button style={styles.resetBtn} onClick={onReset}>

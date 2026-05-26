@@ -8,10 +8,22 @@
 
 | Week | 항목 | 상태 | 완료일 |
 |---|---|---|---|
-| 1 | #2 모듈별 LD 설명 산문체 | **구현 완료** (로컬 빌드 통과, 프로덕션 검증 대기) | 2026-05-26 |
-| 2~3 | Builder Lite | 보류 — Week 1 검증 후 진행 여부 결정 |  |
+| 1 | #2 모듈별 LD 설명 산문체 | **배포 완료** (커밋 `439035a`, Vercel auto-deploy) | 2026-05-26 |
+| 2~3 | Builder Lite | **구현 완료** (가이드형 4-field 폼 + M4 후보 3개 + 자동 합성) | 2026-05-26 |
 | 4~5 | #1 시수 두 세트 토글 | 보류 |  |
 | 6~7 | #3 Factcheck 배치 | 보류 |  |
+
+### Builder Lite 구현 요약
+
+- 신규 API 2개: `api/builder-lite-candidates.js` (M4 후보 3개 생성), `api/builder-lite-assemble.js` (M1~M4 자동 합성)
+- 신규 컴포넌트: `src/components/BuilderLiteIntake.jsx` (4-field 폼 + 후보 카드 선택)
+- 진입 분기: Step 1 상단에 "표준 / 새 커리큘럼" 2개 카드. lite 선택 시 BuilderLiteIntake 진입
+- 합류: assemble 완료 시 합성 모듈을 moduleMaster 스키마(한글 키)로 변환 → `customModules` map으로 Step 5/6에 주입 → 기존 흐름 그대로 활용 (보안 환경·고객사 맞춤·산문 카피·시수 토글 모두 자동 적용 가능)
+- Step 1 mode toggle, Step 5·6 customModules/customTopicMeta props, Step 5 onBackLabel custom, App.jsx mode 상태 + handleLiteAssembled·handleLiteCancel·handleModeSelect 추가
+- Builder Lite 모드에서는 StepIndicator 대신 "Builder Lite" 배지 표시 (2·3·4 단계 건너뛰는 흐름이라 step 표시 의미 없음)
+- Lite 모드 진입 → 4-field 폼 → 다음 → 후보 3개 카드 → 선택 → 합성 → Step 5 (표준 모드와 동일 화면) → Step 6 (고객사 맞춤)
+- 합성 시 intake의 company·role·level이 Step 6 customization 폼에 미리 채워짐 (LD 수정 가능)
+- Step 5에서 "이전" 클릭 시 BuilderLiteIntake로 복귀 (intake 값은 유지되지만 candidates는 재호출 필요 — v2 개선 여지)
 
 ---
 

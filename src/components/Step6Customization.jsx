@@ -17,6 +17,8 @@ export default function Step6Customization({
   viewMode,
   setViewMode,
   toolRewrittenContent,
+  customModules,
+  customTopicMeta,
   onBack,
   onReset,
 }) {
@@ -48,11 +50,11 @@ export default function Step6Customization({
     };
   }, [cooldown]);
 
-  const topicMeta = topics.find((t) => t.코드 === selectedTopic);
+  const topicMeta = customTopicMeta || topics.find((t) => t.코드 === selectedTopic);
 
   const baseRows = selectedModules
     .map((moduleId, idx) => {
-      const mod = moduleMaster.find((m) => m.모듈ID === moduleId);
+      const mod = customModules?.[moduleId] || moduleMaster.find((m) => m.모듈ID === moduleId);
       if (!mod) return null;
       const tool = toolSelections[moduleId] || getModuleDefaultTool(moduleId, selectedTopic);
 

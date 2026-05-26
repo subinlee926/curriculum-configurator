@@ -9,7 +9,7 @@ const LEVEL_COLOR = {
   '레벨별': { bg: '#e0f2fe', color: '#0c4a6e' },
 };
 
-export default function Step1TopicSelect({ selectedTopic, onSelect, onNext }) {
+export default function Step1TopicSelect({ selectedTopic, onSelect, onNext, onModeSelect }) {
   const topicInfo = selectedTopic
     ? topicToolMapping.find((t) => t.주제코드 === selectedTopic)
     : null;
@@ -18,8 +18,26 @@ export default function Step1TopicSelect({ selectedTopic, onSelect, onNext }) {
     <div style={styles.container}>
       <h2 style={styles.title}>교육 주제 선택</h2>
       <p style={styles.subtitle}>
-        11개 AI 교육 주제 중 하나를 선택하세요. 선택한 주제의 모듈과 도구를 구성합니다.
+        표준 커리큘럼 11개 중 선택하거나, 표준에 없는 주제·툴 조합이면 새 커리큘럼을 만들 수 있습니다.
       </p>
+
+      {onModeSelect && (
+        <div style={styles.modeRow}>
+          <div style={{ ...styles.modeCard, ...styles.modeCardStandard }}>
+            <div style={styles.modeCardLabel}>표준 커리큘럼에서 시작</div>
+            <div style={styles.modeCardDesc}>아래 11개 주제 중 선택. 가장 빠른 경로</div>
+          </div>
+          <button
+            type="button"
+            style={{ ...styles.modeCard, ...styles.modeCardLite }}
+            onClick={() => onModeSelect('builder-lite')}
+          >
+            <div style={styles.modeCardLabelLite}>새 커리큘럼 만들기</div>
+            <div style={styles.modeCardDescLite}>표준에 없는 주제·툴 조합도 OK. AI가 자동 설계 (~2분)</div>
+            <div style={styles.modeCardArrow}>→</div>
+          </button>
+        </div>
+      )}
 
       <div style={styles.grid}>
         {topics.map((topic) => {
@@ -116,8 +134,63 @@ const styles = {
   subtitle: {
     fontSize: 14,
     color: '#6b7280',
-    marginBottom: 24,
+    marginBottom: 18,
     lineHeight: 1.6,
+  },
+  modeRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 12,
+    marginBottom: 22,
+  },
+  modeCard: {
+    border: '2px solid #e5e7eb',
+    borderRadius: 10,
+    padding: '16px 18px',
+    background: '#fff',
+    textAlign: 'left',
+    position: 'relative',
+    cursor: 'default',
+  },
+  modeCardStandard: {
+    background: '#f0f4ff',
+    borderColor: '#c7d2fe',
+    cursor: 'default',
+  },
+  modeCardLite: {
+    background: 'linear-gradient(135deg, #1f3864 0%, #2E75B6 100%)',
+    borderColor: '#1f3864',
+    cursor: 'pointer',
+    color: '#fff',
+    transition: 'transform 0.15s',
+  },
+  modeCardLabel: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#1f3864',
+    marginBottom: 4,
+  },
+  modeCardDesc: {
+    fontSize: 12,
+    color: '#475569',
+  },
+  modeCardLabelLite: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  modeCardDescLite: {
+    fontSize: 12,
+    color: '#c7d2fe',
+  },
+  modeCardArrow: {
+    position: 'absolute',
+    top: 14,
+    right: 16,
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: 700,
   },
   grid: {
     display: 'grid',

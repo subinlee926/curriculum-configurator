@@ -6,6 +6,7 @@ import Step3ToolSelect from './components/Step3ToolSelect';
 import Step4Security from './components/Step4Security';
 import Step5Result from './components/Step5Result';
 import Step6Customization from './components/Step6Customization';
+import BuilderLiteIntake from './components/BuilderLiteIntake';
 import { getModuleDefaultTool } from './utils/getDefaultTool';
 
 const DEFAULT_CUSTOMIZATION = {
@@ -15,7 +16,11 @@ const DEFAULT_CUSTOMIZATION = {
   audience: '',
 };
 
+const LITE_TOPIC_CODE = 'LITE';
+const LITE_MODULE_IDS = ['LITE-M1', 'LITE-M2', 'LITE-M3', 'LITE-M4'];
+
 export default function App() {
+  const [mode, setMode] = useState('standard'); // 'standard' | 'builder-lite'
   const [step, setStep] = useState(1);
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [selectedModules, setSelectedModules] = useState([]);
@@ -28,6 +33,19 @@ export default function App() {
   // Tool 기반 재작성 결과 (moduleId → {rewrittenContent, toolAtRewrite})
   // toolAtRewrite는 재작성 당시의 Tool이며, 현재 toolSelections와 다르면 stale 처리
   const [toolRewrittenContent, setToolRewrittenContent] = useState({});
+
+  // Builder Lite 전용 상태
+  const [liteIntake, setLiteIntake] = useState(null); // { company, role, tools, toolsText, topic, level }
+  const [liteTopicName, setLiteTopicName] = useState('');
+  const [liteModules, setLiteModules] = useState(null); // synthetic moduleMaster 엔트리 4개
+  const [liteSelectedM4, setLiteSelectedM4] = useState(null);
+
+  const customModules = liteModules
+    ? Object.fromEntries(liteModules.map((m) => [m.모듈ID, m]))
+    : null;
+  const customTopicMeta = mode === 'builder-lite' && liteTopicName
+    ? { 코드: LITE_TOPIC_CODE, 명: liteTopicName }
+    : null;
 
   const handleTopicSelect = (topicCode) => {
     setSelectedTopic(topicCode);
@@ -77,6 +95,7 @@ export default function App() {
   }, []);
 
   const handleReset = () => {
+    setMode('standard');
     setStep(1);
     setSelectedTopic(null);
     setSelectedModules([]);
@@ -87,6 +106,63 @@ export default function App() {
     setCustomizedModules(null);
     setViewMode('original');
     setToolRewrittenContent({});
+    setLiteIntake(null);
+    setLiteTopicName('');
+    setLiteModules(null);
+    setLiteSelectedM4(null);
+  };
+
+  const handleModeSelect = (newMode) => {
+    setMode(newMode);
+    setSelectedTopic(null);
+    setSelectedModules([]);
+    setToolSelections({});
+    setToolRewrittenContent({});
+    setLiteModules(null);
+    setLiteSelectedM4(null);
+  };
+
+  const handleLiteAssembled = ({ intake, selectedM4, modules, topicName }) => {
+    // 합성 모듈을 기존 moduleMaster 스키마(한글 키)로 변환
+    const synthetic = modules.map((m) => ({
+      모듈ID: m.moduleId,
+      모듈명: m.moduleName,
+      기본시수: m.defaultHours,
+      필수여부: true,
+      난이도: m.difficulty,
+      학습내용: m.learningContent,
+      학습내용키워드: m.learningContent,
+    }));
+    const toolLabel = intake.tools.join(', ');
+    const toolMap = {};
+    LITE_MODULE_IDS.forEach((id) => { toolMap[id] = toolLabel; });
+
+    setLiteIntake(intake);
+    setLiteTopicName(topicName);
+    setLiteModules(synthetic);
+    setLiteSelectedM4(selectedM4);
+    setSelectedTopic(LITE_TOPIC_CODE);
+    setSelectedModules(LITE_MODULE_IDS);
+    setToolSelections(toolMap);
+    setToolRewrittenContent({}); // lite 모드는 재작성 미사용
+    setSecurityText('');
+    setDetectedTags([]);
+    // intake 정보를 Step6 customization 폼에 미리 채워둠 (LD가 수정 가능)
+    setCustomization({
+      company: intake.company || '',
+      role: intake.role || '',
+      level: intake.level || '중급',
+      audience: '',
+    });
+    setStep(5);
+  };
+
+  const handleLiteCancel = () => {
+    setMode('standard');
+    setLiteIntake(null);
+    setLiteTopicName('');
+    setLiteModules(null);
+    setLiteSelectedM4(null);
   };
 
   return (
@@ -102,21 +178,44 @@ export default function App() {
         </div>
       </header>
 
-      {/* Step indicator */}
-      <div style={styles.stepBarWrapper}>
-        <div style={styles.stepBarInner}>
-          <StepIndicator currentStep={step} />
+      {/* Step indicator — 표준 모드에서만 노출 (Lite 모드는 2·3·4 단계를 건너뜀) */}
+      {mode === 'standard' && (
+        <div style={styles.stepBarWrapper}>
+          <div style={styles.stepBarInner}>
+            <StepIndicator currentStep={step} />
+          </div>
         </div>
-      </div>
+      )}
+      {mode === 'builder-lite' && (
+        <div style={styles.liteBadgeWrapper}>
+          <div style={styles.liteBadge}>새 커리큘럼 만들기 모드 (Builder Lite)</div>
+        </div>
+      )}
 
       {/* Main content */}
       <main style={styles.main}>
         <div style={styles.contentCard}>
-          {step === 1 && (
+          {step === 1 && mode === 'standard' && (
             <Step1TopicSelect
               selectedTopic={selectedTopic}
               onSelect={handleTopicSelect}
               onNext={() => setStep(2)}
+              onModeSelect={handleModeSelect}
+            />
+          )}
+          {step === 1 && mode === 'builder-lite' && (
+            <BuilderLiteIntake
+              initial={
+                liteIntake
+                  ? {
+                      ...liteIntake,
+                      toolsText:
+                        liteIntake.toolsText ?? (liteIntake.tools ? liteIntake.tools.join(', ') : ''),
+                    }
+                  : null
+              }
+              onAssembled={handleLiteAssembled}
+              onCancel={handleLiteCancel}
             />
           )}
           {step === 2 && (
@@ -160,7 +259,10 @@ export default function App() {
               detectedTags={detectedTags}
               securityText={securityText}
               toolRewrittenContent={toolRewrittenContent}
-              onBack={() => setStep(4)}
+              customModules={customModules}
+              customTopicMeta={customTopicMeta}
+              onBack={mode === 'builder-lite' ? () => setStep(1) : () => setStep(4)}
+              onBackLabel={mode === 'builder-lite' ? '이전 (입력 수정)' : undefined}
               onNext={() => setStep(6)}
               onReset={handleReset}
             />
@@ -178,6 +280,8 @@ export default function App() {
               viewMode={viewMode}
               setViewMode={setViewMode}
               toolRewrittenContent={toolRewrittenContent}
+              customModules={customModules}
+              customTopicMeta={customTopicMeta}
               onBack={() => setStep(5)}
               onReset={handleReset}
             />
@@ -252,6 +356,23 @@ const styles = {
   stepBarInner: {
     maxWidth: 1100,
     margin: '0 auto',
+  },
+  liteBadgeWrapper: {
+    background: '#fff',
+    borderBottom: '1px solid #e5e7eb',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    padding: '10px 16px',
+    textAlign: 'center',
+  },
+  liteBadge: {
+    display: 'inline-block',
+    background: 'linear-gradient(135deg, #1f3864 0%, #2E75B6 100%)',
+    color: '#fff',
+    borderRadius: 20,
+    padding: '5px 16px',
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: 0.3,
   },
   main: {
     flex: 1,
