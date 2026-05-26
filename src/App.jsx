@@ -170,7 +170,7 @@ export default function App() {
     setLiteRegenError(null);
   };
 
-  const handleLiteRegenerateAll = async () => {
+  const handleLiteRegenerateAll = async (feedback = '') => {
     if (!liteIntake || liteRegenLoading.all || liteRegenLoading.moduleId) return;
     setLiteRegenError(null);
     setLiteRegenLoading({ all: true, moduleId: null });
@@ -187,6 +187,7 @@ export default function App() {
           hours: liteIntake.hours,
           securityText: liteIntake.securityText || '',
           detectedTags: liteIntake.detectedTags || [],
+          regenerationFeedback: feedback || '',
         }),
       });
       if (!res.ok) {
@@ -212,7 +213,7 @@ export default function App() {
     }
   };
 
-  const handleLiteRegenerateOne = async (moduleId) => {
+  const handleLiteRegenerateOne = async (moduleId, feedback = '') => {
     if (!liteIntake || !liteModules || liteRegenLoading.all || liteRegenLoading.moduleId) return;
     setLiteRegenError(null);
     setLiteRegenLoading({ all: false, moduleId });
@@ -234,6 +235,7 @@ export default function App() {
           hours: liteIntake.hours,
           securityText: liteIntake.securityText || '',
           detectedTags: liteIntake.detectedTags || [],
+          regenerationFeedback: feedback || '',
           regenerateOnly: {
             moduleId,
             existingModules: existingForApi,

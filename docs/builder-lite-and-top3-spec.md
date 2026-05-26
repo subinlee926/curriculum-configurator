@@ -12,6 +12,7 @@
 | 2~3 | Builder Lite v1 (4-field + M4 후보 + 합성) | 폐기 — 사용자 피드백으로 v2로 재설계 | 2026-05-26 |
 | 2~3 | Builder Lite v2 (5-field + 단일 생성 + 재생성) | **배포 완료** — 새 설계 | 2026-05-26 |
 | 2~3 | Builder Lite v2.1 (보안 환경 입력 통합) | **배포 완료** — intake 6-field로 확장 | 2026-05-26 |
+| 2~3 | Builder Lite v2.2 (재생성 의견 반영) | **배포 완료** — 방향성 피드백 input | 2026-05-26 |
 | 4~5 | #1 시수 두 세트 토글 | 보류 (Lite v2가 시수를 직접 입력받으므로 가치 감소 — 표준 모드에만 적용 검토) |  |
 | 6~7 | #3 Factcheck 배치 | 보류 |  |
 
@@ -91,6 +92,20 @@ v1 (M4 후보 카드 단계 포함)을 사용자 검토 후 다음 3가지 문�
 - APP_VERSION: v2→v3 (`v3-builder-lite-generate-with-security`)
 
 **왜 사전 반영인가**: 표준 모드는 모듈을 미리 선택해놓은 상태라 Step 4가 사후 경고로 작동(비고 컬럼). Lite는 AI가 처음부터 생성하니까 보안 제약을 받으면 그에 맞는 도구·시나리오로 처음부터 만들기가 더 자연스러움. 같은 보안 입력이라도 도구 흐름에 따라 활용 시점이 달라지는 인사이트.
+
+### v2.2 재생성 의견 반영 (2026-05-26)
+
+"이대로 다시 재생성"이 아닌 **"이런 방향으로 다시 재생성"** 흐름을 도입.
+
+**왜 필요했나**: 의견 없는 재생성은 LLM 입장에서 "운에 맡기기" — 같은 입력으로 다시 호출해도 어디를 바꿔야 할지 모름. 영업 환경에서 LD가 1차 결과를 보고 "실습이 더 필요하다" 같은 직관을 가지고 있다면, 그걸 그대로 prompt로 흘려보내면 LLM은 그 차원만 변화시켜서 효율적으로 결과를 개선할 수 있음.
+
+**구현**:
+- `api/builder-lite-generate.js`: regenerationFeedback 필드 받음. SYSTEM_PROMPT에 [재생성 의견 반영] 섹션 추가 — 예시 5개 (실습 늘리기·심화로·Tool A 활용·Tool B 빼기·사례 중심·M2 보강) + **충돌 시 우선순위 명시**: 보안 제약 > 시수 가이드 > 재생성 의견. 의견이 시수 변경을 요구해도 시수는 고정. `buildFeedbackBlock` 함수가 user prompt에 의견 블록 주입.
+- `App.jsx`: handleLiteRegenerateAll(feedback)·handleLiteRegenerateOne(moduleId, feedback) 시그니처 확장. 빈 문자열이면 의견 없이 호출 (기존 동작 유지).
+- `Step5Result.jsx`: lite 액션 바를 2단으로 재구성 — 상단(시수 불일치 + 전체 재생성), 하단(점선 separator + 재생성 의견 textarea + hint). [전체 재생성]과 [모듈별 재생성] 모두 동일 textarea 값을 참조. textarea는 재생성 후에도 유지(반복 iteration 가능).
+- APP_VERSION: v3→v4 (`v4-builder-lite-generate-with-feedback`)
+
+**우선순위 규칙의 의미**: "실습 시간을 더 늘려주세요"는 시수 변경을 함의할 수 있는데, 시수는 intake에서 확정되었으므로 보존. 대신 "주어진 시수 내에서 실습 비중을 늘림" 같은 해석으로 자연 적용. 보안·시수는 hard constraint, 의견은 soft signal.
 
 ### 학습 — 이 재설계가 가르치는 교훈
 

@@ -35,6 +35,23 @@ LD가 입력한 5가지 정보(회사·직무·툴·주제·시수)로 한 번�
 - 8H 이상: 메인 실습을 여러 개로 쪼개거나 심화 추가
 - 16H 이상: 응용·자동화·완성도까지 풀 코스
 
+[재생성 의견 반영 — regenerationFeedback이 있을 때만]
+LD가 재생성 시 의견(자유 텍스트)을 함께 보냈다면, 그 의견을 이번 재생성에 반영합니다.
+- 의견을 자연스럽게 받아들이세요. 예시:
+  - "실습 모듈을 더 늘려주세요" → 메인·심화 실습 비중을 적극 늘림 (시수 가이드 한도 내)
+  - "더 심화 단계로" → 난이도 한 단계 위 수준의 표현·과업으로 조정
+  - "Tool A를 더 활용해주세요" → 해당 도구의 등장 빈도·구체성 증가
+  - "Tool B는 빼주세요" → 해당 도구 제외 (보안 차단과 동일 처리)
+  - "사례 중심으로" → 추상적 설명 줄이고 구체적 케이스·산출물 강화
+  - "M2가 약합니다" → 부분 재생성 시 해당 모듈만, 전체 재생성 시 그 모듈 보강
+- 의견이 비어있으면 평소 규칙대로 작성
+
+**우선순위 (충돌 시)**:
+1. 보안 제약 (제외 도구·환경) — 절대 우선
+2. 시수 가이드 (모든 모듈 시수 합 일치) — 절대 우선
+3. 재생성 의견 — 위 두 가지를 위배하지 않는 한 적극 반영
+충돌 예: "실습 시간을 더 늘려주세요"인데 입력 시수가 4H이면, 4H 안에서 실습 비중만 늘림 (총 시수 변경 금지).
+
 [보안 제약 반영 — 입력에 보안 정보가 있을 때만 적용]
 LD가 입력한 보안 환경(자유 텍스트)과 자동 감지된 태그(제외 도구·대체 도구·모듈 조정 안내 포함)를 받으면, 모듈 구성과 학습내용을 그 제약에 맞춰 처음부터 조정합니다. 사후 경고가 아닌 사전 반영입니다.
 
@@ -106,6 +123,16 @@ proseDescription:
 3. Markdown 코드 펜스(\`\`\`) 금지
 4. JSON 외 서문·설명·후기 출력 금지`;
 
+function buildFeedbackBlock(regenerationFeedback) {
+  if (!regenerationFeedback || typeof regenerationFeedback !== 'string' || !regenerationFeedback.trim()) {
+    return '';
+  }
+  return `\n[재생성 의견 — LD가 이전 결과를 보고 남긴 방향성]
+${regenerationFeedback.trim()}
+
+위 의견을 이번 재생성에 반영하세요. 단 보안 제약과 시수 합 규칙은 절대 우선이며 의견은 그 다음입니다.`;
+}
+
 function buildSecurityBlock(securityText, detectedTags) {
   const hasText = typeof securityText === 'string' && securityText.trim().length > 0;
   const hasTags = Array.isArray(detectedTags) && detectedTags.length > 0;
@@ -131,8 +158,9 @@ ${tagsDetail}${textBlock}
 위 제약을 모듈 구성과 학습내용에 처음부터 반영하세요. 제외 도구는 언급하지 말고, 대체 도구로 자연스럽게 시나리오를 짜고, 환경 제약(폐쇄망·DLP 등)을 학습내용에 사실로만 반영합니다.`;
 }
 
-function buildPrompt({ company, role, tools, topic, level, hours, regenerateOnly, securityText, detectedTags }) {
+function buildPrompt({ company, role, tools, topic, level, hours, regenerateOnly, securityText, detectedTags, regenerationFeedback }) {
   const securityBlock = buildSecurityBlock(securityText, detectedTags);
+  const feedbackBlock = buildFeedbackBlock(regenerationFeedback);
 
   if (regenerateOnly) {
     const otherSummary = regenerateOnly.existingModules
@@ -152,7 +180,7 @@ function buildPrompt({ company, role, tools, topic, level, hours, regenerateOnly
 - 수준: ${level || '중급'}
 - 총 시수: ${hours}H
 
-${securityBlock}
+${securityBlock}${feedbackBlock}
 
 [부분 재생성 요청]
 아래 단일 모듈만 새로 작성합니다. 모듈명·시수는 그대로 유지하고 learningContent와 proseDescription만 다시 만드세요. 다른 모듈의 내용과 중복되지 않도록 주의하세요. 위 보안 제약은 이 모듈에도 그대로 적용됩니다.
@@ -187,7 +215,7 @@ modules 배열에 위 1개 모듈만 포함. JSON 외 다른 설명 출력 금�
 - 수준: ${level || '중급'}
 - 총 시수: ${hours}H
 
-${securityBlock}
+${securityBlock}${feedbackBlock}
 
 [요청]
 위 정보를 바탕으로 ${hours}H 분량의 커리큘럼 전체를 한 번에 설계하세요.
@@ -255,7 +283,7 @@ function parseModelJson(text) {
 }
 
 const client = new Anthropic();
-const APP_VERSION = 'v3-builder-lite-generate-with-security';
+const APP_VERSION = 'v4-builder-lite-generate-with-feedback';
 
 export default async function handler(req, res) {
   console.log(`[builder-lite-generate] handler invoked (version=${APP_VERSION})`);
@@ -268,16 +296,17 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  const { company, role, tools, topic, level, hours, regenerateOnly, securityText, detectedTags } = req.body ?? {};
+  const { company, role, tools, topic, level, hours, regenerateOnly, securityText, detectedTags, regenerationFeedback } = req.body ?? {};
   if (!role || !Array.isArray(tools) || tools.length === 0 || !topic || typeof hours !== 'number' || hours < 2) {
     return res.status(400).json({
       error: 'Missing or invalid fields',
       required: ['role', 'tools (non-empty array)', 'topic', 'hours (number >= 2)'],
     });
   }
-  // securityText·detectedTags는 선택 — 빈 값이면 제약 없이 생성
+  // securityText·detectedTags·regenerationFeedback은 선택 — 빈 값이면 제약 없이 생성
   const safeSecurityText = typeof securityText === 'string' ? securityText : '';
   const safeDetectedTags = Array.isArray(detectedTags) ? detectedTags : [];
+  const safeFeedback = typeof regenerationFeedback === 'string' ? regenerationFeedback : '';
   if (regenerateOnly) {
     if (!regenerateOnly.moduleId || !Array.isArray(regenerateOnly.existingModules)) {
       return res.status(400).json({ error: 'Invalid regenerateOnly payload' });
@@ -302,7 +331,7 @@ export default async function handler(req, res) {
       max_tokens: adaptiveMaxTokens,
       temperature: 0.5,
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: buildPrompt({ company, role, tools, topic, level, hours, regenerateOnly, securityText: safeSecurityText, detectedTags: safeDetectedTags }) }],
+      messages: [{ role: 'user', content: buildPrompt({ company, role, tools, topic, level, hours, regenerateOnly, securityText: safeSecurityText, detectedTags: safeDetectedTags, regenerationFeedback: safeFeedback }) }],
     });
   } catch (err) {
     if (err instanceof Anthropic.RateLimitError) {
@@ -355,6 +384,7 @@ export default async function handler(req, res) {
   console.log('[builder-lite-generate] OK:', JSON.stringify({
     company, role, tools, topic, hours, mode: regenerateOnly ? 'partial' : 'full',
     securityTags: safeDetectedTags.map((t) => t.태그),
+    feedbackProvided: safeFeedback.trim().length > 0,
     moduleCount: parsed.modules.length, elapsedMs: elapsed,
     tokens: {
       input: response.usage?.input_tokens ?? 0,

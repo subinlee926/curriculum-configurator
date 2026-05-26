@@ -24,6 +24,7 @@ export default function Step5Result({
   liteRegenError,
 }) {
   const [copied, setCopied] = useState(false);
+  const [regenFeedback, setRegenFeedback] = useState('');
 
   const topicMeta = customTopicMeta || topics.find((t) => t.코드 === selectedTopic);
 
@@ -126,28 +127,43 @@ export default function Step5Result({
 
       {liteMode && (
         <div style={styles.liteActionBar}>
-          <div style={styles.liteActionLeft}>
-            {hoursMismatch && (
-              <span style={styles.hoursMismatchTag}>
-                요청 {liteHours}H / 생성 {totalHours}H — 차이 있음
-              </span>
-            )}
-            {liteRegenError && (
-              <span style={styles.liteErrorText}>{liteRegenError}</span>
-            )}
+          <div style={styles.liteActionTop}>
+            <div style={styles.liteActionLeft}>
+              {hoursMismatch && (
+                <span style={styles.hoursMismatchTag}>
+                  요청 {liteHours}H / 생성 {totalHours}H — 차이 있음
+                </span>
+              )}
+              {liteRegenError && (
+                <span style={styles.liteErrorText}>{liteRegenError}</span>
+              )}
+            </div>
+            <button
+              type="button"
+              style={{
+                ...styles.regenAllBtn,
+                opacity: liteRegenLoading?.all || liteRegenLoading?.moduleId ? 0.5 : 1,
+                cursor: liteRegenLoading?.all || liteRegenLoading?.moduleId ? 'not-allowed' : 'pointer',
+              }}
+              onClick={() => onLiteRegenerateAll && onLiteRegenerateAll(regenFeedback)}
+              disabled={liteRegenLoading?.all || liteRegenLoading?.moduleId}
+            >
+              {liteRegenLoading?.all ? '전체 재생성 중… (약 30~60초)' : '전체 재생성'}
+            </button>
           </div>
-          <button
-            type="button"
-            style={{
-              ...styles.regenAllBtn,
-              opacity: liteRegenLoading?.all || liteRegenLoading?.moduleId ? 0.5 : 1,
-              cursor: liteRegenLoading?.all || liteRegenLoading?.moduleId ? 'not-allowed' : 'pointer',
-            }}
-            onClick={onLiteRegenerateAll}
-            disabled={liteRegenLoading?.all || liteRegenLoading?.moduleId}
-          >
-            {liteRegenLoading?.all ? '전체 재생성 중… (약 30~60초)' : '전체 재생성'}
-          </button>
+          <div style={styles.feedbackRow}>
+            <label style={styles.feedbackLabel}>재생성 의견 (선택)</label>
+            <textarea
+              value={regenFeedback}
+              onChange={(e) => setRegenFeedback(e.target.value)}
+              placeholder="예) 실습 비중을 더 늘려주세요 / 사례 중심으로 / Tool A를 더 활용 / M2가 약합니다"
+              style={styles.feedbackTextarea}
+              disabled={liteRegenLoading?.all || liteRegenLoading?.moduleId}
+            />
+            <div style={styles.feedbackHint}>
+              전체·모듈별 재생성 모두 이 의견을 함께 보냅니다. 비워두면 의견 없이 재생성됩니다. 보안·시수 제약이 의견보다 우선합니다.
+            </div>
+          </div>
         </div>
       )}
 
@@ -251,7 +267,7 @@ export default function Step5Result({
                           opacity: anyLoading ? 0.5 : 1,
                           cursor: anyLoading ? 'not-allowed' : 'pointer',
                         }}
-                        onClick={() => onLiteRegenerateOne && onLiteRegenerateOne(row.id)}
+                        onClick={() => onLiteRegenerateOne && onLiteRegenerateOne(row.id, regenFeedback)}
                         disabled={anyLoading}
                         title="이 모듈만 다시 생성"
                       >
@@ -368,14 +384,19 @@ const styles = {
     whiteSpace: 'pre-line',
   },
   liteActionBar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     background: '#f0f4ff',
     border: '1px solid #c7d2fe',
     borderRadius: 8,
-    padding: '10px 14px',
+    padding: '12px 14px',
     marginBottom: 12,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+  liteActionTop: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 10,
     flexWrap: 'wrap',
   },
@@ -385,6 +406,38 @@ const styles = {
     gap: 10,
     flexWrap: 'wrap',
     fontSize: 12,
+  },
+  feedbackRow: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    borderTop: '1px dashed #c7d2fe',
+    paddingTop: 10,
+  },
+  feedbackLabel: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: '#1f3864',
+    letterSpacing: 0.3,
+  },
+  feedbackTextarea: {
+    width: '100%',
+    minHeight: 50,
+    padding: '8px 12px',
+    border: '1px solid #c7d2fe',
+    borderRadius: 6,
+    fontSize: 13,
+    background: '#fff',
+    fontFamily: 'inherit',
+    lineHeight: 1.5,
+    resize: 'vertical',
+    boxSizing: 'border-box',
+    outline: 'none',
+  },
+  feedbackHint: {
+    fontSize: 11,
+    color: '#475569',
+    lineHeight: 1.5,
   },
   hoursMismatchTag: {
     background: '#fef3c7',
