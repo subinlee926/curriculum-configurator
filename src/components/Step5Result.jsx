@@ -16,6 +16,12 @@ export default function Step5Result({
   onBackLabel,
   onNext,
   onReset,
+  liteMode = false,
+  liteHours,
+  onLiteRegenerateAll,
+  onLiteRegenerateOne,
+  liteRegenLoading,
+  liteRegenError,
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -44,8 +50,10 @@ export default function Step5Result({
 
     return {
       순서: idx + 1,
+      id: moduleId,
       모듈명: mod.모듈명,
       학습내용: contentText,
+      proseDescription: mod.proseDescription || null,
       시수: mod.기본시수,
       Tool: tool,
       비고: notes.join(' / ') || '—',
@@ -57,17 +65,26 @@ export default function Step5Result({
   const formatHours = (h) => `${h}H`;
 
   const warningCount = curriculumRows.filter((r) => r.hasWarning).length;
+  const hasProse = curriculumRows.some((r) => r.proseDescription);
+  const hoursMismatch = liteMode && typeof liteHours === 'number' && liteHours !== totalHours;
 
-  const handleCopy = () => {
+  const buildCopyText = ({ includeProse }) => {
     const header = ['순서', '모듈명', '학습 내용', '시수', 'Tool', '비고'].join('\t');
     const rows = curriculumRows
-      .map((r) =>
-        [r.순서, r.모듈명, r.학습내용, formatHours(r.시수), r.Tool, r.비고].join('\t')
-      )
+      .map((r) => {
+        let content = r.학습내용;
+        if (includeProse && r.proseDescription) {
+          content = `${content}\n\n[LD 설명]\n${r.proseDescription}`;
+        }
+        return [r.순서, r.모듈명, content.replace(/\n/g, ' '), formatHours(r.시수), r.Tool, r.비고].join('\t');
+      })
       .join('\n');
     const footer = `\n합계\t${curriculumRows.length}개 모듈\t\t${formatHours(totalHours)}\t\t`;
+    return [header, rows, footer].join('\n');
+  };
 
-    const text = [header, rows, footer].join('\n');
+  const handleCopy = ({ includeProse = false } = {}) => {
+    const text = buildCopyText({ includeProse });
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -81,16 +98,58 @@ export default function Step5Result({
           <h2 style={styles.title}>맞춤 커리큘럼</h2>
           <p style={styles.subtitle}>구성된 커리큘럼을 확인하고 클립보드로 복사하세요.</p>
         </div>
-        <button
-          style={{
-            ...styles.copyBtn,
-            background: copied ? '#16a34a' : '#2E75B6',
-          }}
-          onClick={handleCopy}
-        >
-          {copied ? '복사 완료' : '클립보드 복사'}
-        </button>
+        <div style={styles.copyBtnGroup}>
+          <button
+            style={{
+              ...styles.copyBtn,
+              background: copied ? '#16a34a' : '#2E75B6',
+            }}
+            onClick={() => handleCopy({ includeProse: false })}
+            title="표 영역만 클립보드에 복사"
+          >
+            {copied ? '복사 완료' : hasProse ? '표만 복사' : '클립보드 복사'}
+          </button>
+          {hasProse && (
+            <button
+              style={{
+                ...styles.copyBtn,
+                background: copied ? '#16a34a' : '#1f3864',
+              }}
+              onClick={() => handleCopy({ includeProse: true })}
+              title="표와 LD 설명 산문을 함께 복사"
+            >
+              {copied ? '복사 완료' : '표 + LD 설명 복사'}
+            </button>
+          )}
+        </div>
       </div>
+
+      {liteMode && (
+        <div style={styles.liteActionBar}>
+          <div style={styles.liteActionLeft}>
+            {hoursMismatch && (
+              <span style={styles.hoursMismatchTag}>
+                요청 {liteHours}H / 생성 {totalHours}H — 차이 있음
+              </span>
+            )}
+            {liteRegenError && (
+              <span style={styles.liteErrorText}>{liteRegenError}</span>
+            )}
+          </div>
+          <button
+            type="button"
+            style={{
+              ...styles.regenAllBtn,
+              opacity: liteRegenLoading?.all || liteRegenLoading?.moduleId ? 0.5 : 1,
+              cursor: liteRegenLoading?.all || liteRegenLoading?.moduleId ? 'not-allowed' : 'pointer',
+            }}
+            onClick={onLiteRegenerateAll}
+            disabled={liteRegenLoading?.all || liteRegenLoading?.moduleId}
+          >
+            {liteRegenLoading?.all ? '전체 재생성 중… (약 30~60초)' : '전체 재생성'}
+          </button>
+        </div>
+      )}
 
       {/* Summary cards */}
       <div style={styles.summaryRow}>
@@ -145,36 +204,68 @@ export default function Step5Result({
               <th style={{ ...styles.th }}>학습 내용</th>
               <th style={{ ...styles.th, width: 56 }}>시수</th>
               <th style={{ ...styles.th, width: 120 }}>Tool</th>
-              <th style={{ ...styles.th, width: 180 }}>비고</th>
+              {liteMode ? (
+                <th style={{ ...styles.th, width: 110 }}>작업</th>
+              ) : (
+                <th style={{ ...styles.th, width: 180 }}>비고</th>
+              )}
             </tr>
           </thead>
           <tbody>
-            {curriculumRows.map((row) => (
-              <tr
-                key={row.순서}
-                style={{
-                  ...styles.tr,
-                  background: row.hasWarning ? '#fff7ed' : row.순서 % 2 === 0 ? '#f9fafb' : '#fff',
-                }}
-              >
-                <td style={{ ...styles.td, textAlign: 'center', color: '#9ca3af' }}>{row.순서}</td>
-                <td style={styles.td}>
-                  <div style={styles.moduleNameCell}>{row.모듈명}</div>
-                </td>
-                <td style={{ ...styles.td, fontSize: 13, color: '#374151', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
-                  {row.학습내용}
-                </td>
-                <td style={{ ...styles.td, textAlign: 'center', fontWeight: 700, color: '#1f3864' }}>
-                  {formatHours(row.시수)}
-                </td>
-                <td style={styles.td}>
-                  <span style={styles.toolPill}>{row.Tool}</span>
-                </td>
-                <td style={{ ...styles.td, fontSize: 12, color: row.hasWarning ? '#c2410c' : '#6b7280' }}>
-                  {row.비고}
-                </td>
-              </tr>
-            ))}
+            {curriculumRows.map((row) => {
+              const isThisRegenerating = liteRegenLoading?.moduleId === row.id;
+              const anyLoading = liteRegenLoading?.all || liteRegenLoading?.moduleId;
+              return (
+                <tr
+                  key={row.순서}
+                  style={{
+                    ...styles.tr,
+                    background: row.hasWarning ? '#fff7ed' : row.순서 % 2 === 0 ? '#f9fafb' : '#fff',
+                  }}
+                >
+                  <td style={{ ...styles.td, textAlign: 'center', color: '#9ca3af' }}>{row.순서}</td>
+                  <td style={styles.td}>
+                    <div style={styles.moduleNameCell}>{row.모듈명}</div>
+                  </td>
+                  <td style={{ ...styles.td, fontSize: 13, color: '#374151', lineHeight: '1.5' }}>
+                    <div style={{ whiteSpace: 'pre-line' }}>{row.학습내용}</div>
+                    {row.proseDescription && (
+                      <div style={styles.proseBlock}>
+                        <div style={styles.proseLabel}>LD 설명</div>
+                        <div style={styles.proseText}>{row.proseDescription}</div>
+                      </div>
+                    )}
+                  </td>
+                  <td style={{ ...styles.td, textAlign: 'center', fontWeight: 700, color: '#1f3864' }}>
+                    {formatHours(row.시수)}
+                  </td>
+                  <td style={styles.td}>
+                    <span style={styles.toolPill}>{row.Tool}</span>
+                  </td>
+                  {liteMode ? (
+                    <td style={styles.td}>
+                      <button
+                        type="button"
+                        style={{
+                          ...styles.regenOneBtn,
+                          opacity: anyLoading ? 0.5 : 1,
+                          cursor: anyLoading ? 'not-allowed' : 'pointer',
+                        }}
+                        onClick={() => onLiteRegenerateOne && onLiteRegenerateOne(row.id)}
+                        disabled={anyLoading}
+                        title="이 모듈만 다시 생성"
+                      >
+                        {isThisRegenerating ? '생성 중…' : '재생성'}
+                      </button>
+                    </td>
+                  ) : (
+                    <td style={{ ...styles.td, fontSize: 12, color: row.hasWarning ? '#c2410c' : '#6b7280' }}>
+                      {row.비고}
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
           <tfoot>
             <tr style={styles.tfootRow}>
@@ -249,6 +340,84 @@ const styles = {
     cursor: 'pointer',
     flexShrink: 0,
     transition: 'background 0.2s',
+  },
+  copyBtnGroup: {
+    display: 'flex',
+    gap: 8,
+    flexShrink: 0,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
+  proseBlock: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTop: '1px dashed #d1d5db',
+  },
+  proseLabel: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: '#1f3864',
+    letterSpacing: '0.4px',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  proseText: {
+    fontSize: 13,
+    color: '#374151',
+    lineHeight: 1.7,
+    whiteSpace: 'pre-line',
+  },
+  liteActionBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    background: '#f0f4ff',
+    border: '1px solid #c7d2fe',
+    borderRadius: 8,
+    padding: '10px 14px',
+    marginBottom: 12,
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  liteActionLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
+    fontSize: 12,
+  },
+  hoursMismatchTag: {
+    background: '#fef3c7',
+    color: '#92400e',
+    borderRadius: 5,
+    padding: '3px 10px',
+    fontSize: 12,
+    fontWeight: 600,
+  },
+  liteErrorText: {
+    color: '#991b1b',
+    fontSize: 12,
+    fontWeight: 500,
+  },
+  regenAllBtn: {
+    background: '#fff',
+    color: '#1f3864',
+    border: '1px solid #1f3864',
+    borderRadius: 7,
+    padding: '7px 16px',
+    fontSize: 13,
+    fontWeight: 600,
+    whiteSpace: 'nowrap',
+  },
+  regenOneBtn: {
+    background: '#f3f4f6',
+    color: '#374151',
+    border: '1px solid #d1d5db',
+    borderRadius: 5,
+    padding: '5px 10px',
+    fontSize: 12,
+    fontWeight: 600,
+    whiteSpace: 'nowrap',
   },
   summaryRow: {
     display: 'grid',

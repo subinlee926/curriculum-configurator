@@ -17,7 +17,6 @@ const DEFAULT_CUSTOMIZATION = {
 };
 
 const LITE_TOPIC_CODE = 'LITE';
-const LITE_MODULE_IDS = ['LITE-M1', 'LITE-M2', 'LITE-M3', 'LITE-M4'];
 
 export default function App() {
   const [mode, setMode] = useState('standard'); // 'standard' | 'builder-lite'
@@ -35,10 +34,11 @@ export default function App() {
   const [toolRewrittenContent, setToolRewrittenContent] = useState({});
 
   // Builder Lite 전용 상태
-  const [liteIntake, setLiteIntake] = useState(null); // { company, role, tools, toolsText, topic, level }
+  const [liteIntake, setLiteIntake] = useState(null); // { company, role, tools, toolsText, topic, level, hours }
   const [liteTopicName, setLiteTopicName] = useState('');
-  const [liteModules, setLiteModules] = useState(null); // synthetic moduleMaster 엔트리 4개
-  const [liteSelectedM4, setLiteSelectedM4] = useState(null);
+  const [liteModules, setLiteModules] = useState(null); // synthetic moduleMaster 엔트리 N개 (시수에 따라 가변)
+  const [liteRegenLoading, setLiteRegenLoading] = useState({ all: false, moduleId: null });
+  const [liteRegenError, setLiteRegenError] = useState(null);
 
   const customModules = liteModules
     ? Object.fromEntries(liteModules.map((m) => [m.모듈ID, m]))
@@ -109,7 +109,8 @@ export default function App() {
     setLiteIntake(null);
     setLiteTopicName('');
     setLiteModules(null);
-    setLiteSelectedM4(null);
+    setLiteRegenLoading({ all: false, moduleId: null });
+    setLiteRegenError(null);
   };
 
   const handleModeSelect = (newMode) => {
@@ -119,41 +120,44 @@ export default function App() {
     setToolSelections({});
     setToolRewrittenContent({});
     setLiteModules(null);
-    setLiteSelectedM4(null);
+    setLiteRegenError(null);
   };
 
-  const handleLiteAssembled = ({ intake, selectedM4, modules, topicName }) => {
-    // 합성 모듈을 기존 moduleMaster 스키마(한글 키)로 변환
-    const synthetic = modules.map((m) => ({
-      모듈ID: m.moduleId,
-      모듈명: m.moduleName,
-      기본시수: m.defaultHours,
-      필수여부: true,
-      난이도: m.difficulty,
-      학습내용: m.learningContent,
-      학습내용키워드: m.learningContent,
-    }));
+  // generate API 응답 모듈을 moduleMaster 스키마(한글 키)로 변환
+  const toSyntheticModule = (m) => ({
+    모듈ID: m.moduleId,
+    모듈명: m.moduleName,
+    기본시수: m.defaultHours,
+    필수여부: true,
+    난이도: m.difficulty,
+    학습내용: m.learningContent,
+    학습내용키워드: m.learningContent,
+    proseDescription: m.proseDescription,
+  });
+
+  const handleLiteAssembled = ({ intake, modules, topicName }) => {
+    const synthetic = modules.map(toSyntheticModule);
     const toolLabel = intake.tools.join(', ');
     const toolMap = {};
-    LITE_MODULE_IDS.forEach((id) => { toolMap[id] = toolLabel; });
+    synthetic.forEach((mod) => { toolMap[mod.모듈ID] = toolLabel; });
+    const moduleIds = synthetic.map((mod) => mod.모듈ID);
 
     setLiteIntake(intake);
     setLiteTopicName(topicName);
     setLiteModules(synthetic);
-    setLiteSelectedM4(selectedM4);
     setSelectedTopic(LITE_TOPIC_CODE);
-    setSelectedModules(LITE_MODULE_IDS);
+    setSelectedModules(moduleIds);
     setToolSelections(toolMap);
-    setToolRewrittenContent({}); // lite 모드는 재작성 미사용
+    setToolRewrittenContent({});
     setSecurityText('');
     setDetectedTags([]);
-    // intake 정보를 Step6 customization 폼에 미리 채워둠 (LD가 수정 가능)
     setCustomization({
       company: intake.company || '',
       role: intake.role || '',
       level: intake.level || '중급',
       audience: '',
     });
+    setLiteRegenError(null);
     setStep(5);
   };
 
@@ -162,7 +166,91 @@ export default function App() {
     setLiteIntake(null);
     setLiteTopicName('');
     setLiteModules(null);
-    setLiteSelectedM4(null);
+    setLiteRegenError(null);
+  };
+
+  const handleLiteRegenerateAll = async () => {
+    if (!liteIntake || liteRegenLoading.all || liteRegenLoading.moduleId) return;
+    setLiteRegenError(null);
+    setLiteRegenLoading({ all: true, moduleId: null });
+    try {
+      const res = await fetch('/api/builder-lite-generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          company: liteIntake.company || '범용',
+          role: liteIntake.role,
+          tools: liteIntake.tools,
+          topic: liteIntake.topic,
+          level: liteIntake.level,
+          hours: liteIntake.hours,
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || `서버 오류 (${res.status})`);
+      }
+      const data = await res.json();
+      if (!Array.isArray(data.modules) || data.modules.length === 0) {
+        throw new Error('AI가 모듈을 생성하지 못했습니다.');
+      }
+      const synthetic = data.modules.map(toSyntheticModule);
+      const toolLabel = liteIntake.tools.join(', ');
+      const toolMap = {};
+      synthetic.forEach((mod) => { toolMap[mod.모듈ID] = toolLabel; });
+      const moduleIds = synthetic.map((mod) => mod.모듈ID);
+      setLiteModules(synthetic);
+      setSelectedModules(moduleIds);
+      setToolSelections(toolMap);
+    } catch (err) {
+      setLiteRegenError(err.message);
+    } finally {
+      setLiteRegenLoading({ all: false, moduleId: null });
+    }
+  };
+
+  const handleLiteRegenerateOne = async (moduleId) => {
+    if (!liteIntake || !liteModules || liteRegenLoading.all || liteRegenLoading.moduleId) return;
+    setLiteRegenError(null);
+    setLiteRegenLoading({ all: false, moduleId });
+    try {
+      const existingForApi = liteModules.map((mod) => ({
+        moduleId: mod.모듈ID,
+        moduleName: mod.모듈명,
+        defaultHours: mod.기본시수,
+      }));
+      const res = await fetch('/api/builder-lite-generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          company: liteIntake.company || '범용',
+          role: liteIntake.role,
+          tools: liteIntake.tools,
+          topic: liteIntake.topic,
+          level: liteIntake.level,
+          hours: liteIntake.hours,
+          regenerateOnly: {
+            moduleId,
+            existingModules: existingForApi,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || `서버 오류 (${res.status})`);
+      }
+      const data = await res.json();
+      const updated = Array.isArray(data.modules) ? data.modules[0] : null;
+      if (!updated) {
+        throw new Error('AI가 모듈을 재생성하지 못했습니다.');
+      }
+      const updatedSynthetic = toSyntheticModule(updated);
+      setLiteModules((prev) => prev.map((mod) => (mod.모듈ID === moduleId ? updatedSynthetic : mod)));
+    } catch (err) {
+      setLiteRegenError(err.message);
+    } finally {
+      setLiteRegenLoading({ all: false, moduleId: null });
+    }
   };
 
   return (
@@ -263,8 +351,14 @@ export default function App() {
               customTopicMeta={customTopicMeta}
               onBack={mode === 'builder-lite' ? () => setStep(1) : () => setStep(4)}
               onBackLabel={mode === 'builder-lite' ? '이전 (입력 수정)' : undefined}
-              onNext={() => setStep(6)}
+              onNext={mode === 'builder-lite' ? undefined : () => setStep(6)}
               onReset={handleReset}
+              liteMode={mode === 'builder-lite'}
+              liteHours={liteIntake?.hours}
+              onLiteRegenerateAll={mode === 'builder-lite' ? handleLiteRegenerateAll : undefined}
+              onLiteRegenerateOne={mode === 'builder-lite' ? handleLiteRegenerateOne : undefined}
+              liteRegenLoading={liteRegenLoading}
+              liteRegenError={liteRegenError}
             />
           )}
           {step === 6 && (
