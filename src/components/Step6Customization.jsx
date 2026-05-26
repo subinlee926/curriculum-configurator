@@ -220,24 +220,42 @@ export default function Step6Customization({
   const renderContentCell = (row) => {
     if (viewMode === 'customized' && customizedModules?.[row.id]) {
       const c = customizedModules[row.id];
-      return <div style={{ whiteSpace: 'pre-line' }}>{c.customizedContent}</div>;
+      return (
+        <div>
+          <div style={{ whiteSpace: 'pre-line' }}>{c.customizedContent}</div>
+          {c.proseDescription && (
+            <div style={styles.proseBlock}>
+              <div style={styles.proseLabel}>LD 설명</div>
+              <div style={styles.proseText}>{c.proseDescription}</div>
+            </div>
+          )}
+        </div>
+      );
     }
     return <div style={{ whiteSpace: 'pre-line' }}>{row.originalContent}</div>;
   };
 
-  const handleCopy = () => {
+  const buildCopyText = ({ includeProse }) => {
     const header = ['순서', '모듈명', '학습 내용', '시수', 'Tool', '비고'].join('\t');
     const rows = baseRows
       .map((r) => {
         let content = r.originalContent;
         if (viewMode === 'customized' && customizedModules?.[r.id]) {
-          content = customizedModules[r.id].customizedContent;
+          const c = customizedModules[r.id];
+          content = c.customizedContent;
+          if (includeProse && c.proseDescription) {
+            content = `${content}\n\n[LD 설명]\n${c.proseDescription}`;
+          }
         }
         return [r.순서, r.모듈명, content.replace(/\n/g, ' '), formatHours(r.시수), r.Tool, r.비고].join('\t');
       })
       .join('\n');
     const footer = `\n합계\t${baseRows.length}개 모듈\t\t${formatHours(totalHours)}\t\t`;
-    const text = [header, rows, footer].join('\n');
+    return [header, rows, footer].join('\n');
+  };
+
+  const handleCopy = ({ includeProse = false } = {}) => {
+    const text = buildCopyText({ includeProse });
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -245,6 +263,9 @@ export default function Step6Customization({
   };
 
   const hasCustomized = customizedModules && Object.keys(customizedModules).length > 0;
+  const hasProse =
+    hasCustomized &&
+    Object.values(customizedModules).some((m) => m?.proseDescription);
 
   return (
     <div style={styles.container}>
@@ -256,12 +277,30 @@ export default function Step6Customization({
           </p>
         </div>
         {hasCustomized && (
-          <button
-            style={{ ...styles.copyBtn, background: copied ? '#16a34a' : '#2E75B6' }}
-            onClick={handleCopy}
-          >
-            {copied ? '복사 완료' : '클립보드 복사'}
-          </button>
+          <div style={styles.copyBtnGroup}>
+            <button
+              style={{
+                ...styles.copyBtn,
+                background: copied ? '#16a34a' : '#2E75B6',
+              }}
+              onClick={() => handleCopy({ includeProse: false })}
+              title="표 영역만 클립보드에 복사"
+            >
+              {copied ? '복사 완료' : hasProse ? '표만 복사' : '클립보드 복사'}
+            </button>
+            {hasProse && (
+              <button
+                style={{
+                  ...styles.copyBtn,
+                  background: copied ? '#16a34a' : '#1f3864',
+                }}
+                onClick={() => handleCopy({ includeProse: true })}
+                title="표와 LD 설명 산문을 함께 복사"
+              >
+                {copied ? '복사 완료' : '표 + LD 설명 복사'}
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -492,6 +531,32 @@ const styles = {
     cursor: 'pointer',
     flexShrink: 0,
     transition: 'background 0.2s',
+  },
+  copyBtnGroup: {
+    display: 'flex',
+    gap: 8,
+    flexShrink: 0,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
+  proseBlock: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTop: '1px dashed #d1d5db',
+  },
+  proseLabel: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: '#1f3864',
+    letterSpacing: '0.4px',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  proseText: {
+    fontSize: 13,
+    color: '#374151',
+    lineHeight: 1.7,
+    whiteSpace: 'pre-line',
   },
   formCard: {
     background: '#f9fafb',

@@ -1,0 +1,533 @@
+# Curriculum Configurator — Builder Lite + Top 3 비교 스펙
+
+작성일: 2026-05-26
+작성자: 수빈 매니저 + Claude (Opus 4.7)
+관련 문서: `~/.claude/skills/curriculum-builder/SKILL.md` (커밋 `b7811bb`)
+
+## 구현 상태
+
+| Week | 항목 | 상태 | 완료일 |
+|---|---|---|---|
+| 1 | #2 모듈별 LD 설명 산문체 | **구현 완료** (로컬 빌드 통과, 프로덕션 검증 대기) | 2026-05-26 |
+| 2~3 | Builder Lite | 보류 — Week 1 검증 후 진행 여부 결정 |  |
+| 4~5 | #1 시수 두 세트 토글 | 보류 |  |
+| 6~7 | #3 Factcheck 배치 | 보류 |  |
+
+---
+
+## 0. 배경과 목적
+
+### 0.1 현재 configurator의 구조적 한계
+
+현재 `curriculum-configurator.vercel.app`은 **"표준 → 고객사 맞춤"** 흐름만 지원한다.
+
+| 단계 | 동작 |
+|---|---|
+| Step 1 | 11개 표준 주제(N1~N11) 중 택 1 |
+| Step 2 | 해당 주제의 모듈을 체크/언체크 |
+| Step 3 | 모듈별 Tool 선택 → 자동 재작성 |
+| Step 4 | 보안 환경 키워드 입력 |
+| Step 5 | 최종 커리큘럼 표시 |
+| Step 6 | 고객사 맥락 입력 → 맞춤 재작성 |
+
+**한계**: 표준 주제 N1~N11에 없는 신규 주제·툴 조합·비표준 직무를 요청받으면 LD가 도구를 벗어나 빈 문서에서 시작해야 한다. 영업/미팅 현장의 가장 큰 사용 빈도 손실 지점.
+
+### 0.2 curriculum-builder 스킬과의 관계
+
+`curriculum-builder`는 "0 → 신규 표준 커리큘럼" 생성을 본업으로 한다.
+
+| 구분 | curriculum-builder | configurator |
+|---|---|---|
+| 사용자 | LD가 책상에서 깊게 작업 | 영업·미팅 중 빠르게 |
+| 시간 | ~5분 (14단계) | ~1분 (6단계) |
+| 산출 | 표준 시트 환원용 .md | 제안서 즉시 활용용 |
+| 품질 보증 | Factcheck·DNA·다양성 풀세트 | LLM 단일 합성 |
+
+본 스펙의 핵심 전략: **builder의 결과물 품질 로직을 configurator의 영업 속도 UX에 이식**.
+
+### 0.3 본 문서가 다루는 4개 후보
+
+| # | 항목 | 영향력 | 난이도 | 구현 추정 |
+|---|---|---|---|---|
+| ★ | **Builder Lite (신규 모드)** | ★★★★★ | 高 | 5~7일 |
+| #2 | 모듈별 LD 설명 산문체 | ★★★★★ | 中 | 2~3일 |
+| #1 | 시수 두 세트 토글 (short 6h / long 12h) | ★★★★★ | 中 | 3~4일 |
+| #3 | Tool Feature Factcheck 배치 | ★★★★ | 高 | 5~7일 |
+
+---
+
+## 1. ★ Builder Lite — 신규 모드 (핵심 제안)
+
+### 1.1 한 줄 정의
+
+> "표준 커리큘럼에 없는 신규 주제·툴 조합도 LD가 4-field 폼 입력만으로 1~2분 안에 커리큘럼 시안을 받을 수 있는 진입 모드."
+
+### 1.2 진입점 UI
+
+Step 1 주제 선택 화면 상단에 2개 카드 분기.
+
+```
+┌────────────────────────────────────┐
+│  📚 표준 커리큘럼에서 시작          │
+│  N1~N11 중 선택 (기존 흐름)        │
+└────────────────────────────────────┘
+┌────────────────────────────────────┐
+│  ✨ 새 커리큘럼 만들기              │
+│  표준에 없는 주제·툴 조합도 OK     │
+└────────────────────────────────────┘
+```
+
+### 1.3 Step A — 4-field 입력 폼 (확정안)
+
+가이드형 4-field 폼. AI chat 없이 폼 입력만으로 완결. 영업 환경 안정성 최우선.
+
+```
+회사명     [____________________]    (선택 — "범용" 가능)
+직무       [____________________]    (필수)
+툴 (복수)  [Figma ×] [Nano Banana ×]
+           [+ 툴 추가]               (필수, 최소 1개)
+주제       [____________________]    (필수)
+
+         [← 이전]  [다음 →]
+```
+
+**검증 규칙** (builder Skill 1 차용):
+- 회사/직무 분리 검증 — "디자인센터" 같은 부서명이 직무 필드에 오면 회사로 이동 제안
+- 복수 툴 입력 시 "등" 워딩 자동 제거
+- 일관성 — 툴과 주제의 정합성 LLM 1차 점검 (예: Figma + "데이터 분석" 조합 시 경고)
+
+### 1.4 Step B — M4 후보 3개 카드 선택
+
+LLM이 4-field 정보로 메인 실습 시나리오 3개를 생성, LD가 직접 선택.
+
+```
+[카드 1] (top)
+Figma + Nano Banana로 시즌 굿즈 패키지 시안 제작
+─────────────────────────────────────
+• 학습 목표: 브랜드 톤앤매너에 맞는 AI 이미지를 ...
+• 사용 feature: Figma 컴포넌트, Nano Banana 캐릭터 일관성
+• 예상 산출물: 굿즈 4종 × 3가지 안 = 12장 시안
+        [이 시나리오로 진행]
+
+[카드 2] [카드 3] ...
+
+         [다시 생성] [카드 1로 자동 진행]
+```
+
+**예외 처리**:
+- LD 무응답·"기본"·"진행해" → 카드 1 자동 fallback (builder 동일 규칙)
+- "다시 생성" → temperature 살짝 올려 재시도 (1회 한정)
+
+**생략한 builder 단계 (영업 속도 우선)**:
+- Skill 2 (task research·DNA·workflow) — 도메인 추론으로 대체
+- Skill 4 scoring rubric (V3·V4·V2 가중합·Killer 필터) — LLM 단순 합성으로 대체
+- 다양성 체크 — Lite는 사용자 책임
+
+### 1.5 Step C — M1~M4 자동 합성 + 합류
+
+선택된 M4 task 기반으로 M3·M2·M1를 단일 API 호출로 합성. 결과물은 기존 Step 5 (최종 커리큘럼) 화면과 **동일한 표 형식**으로 표시.
+
+```
+[M1 툴 소개]    [M2 When/Why]    [M3 기초 실습]    [M4 메인 실습]
+도구 유형       배경 근거         M4 feature 역산   선택된 시나리오
+기본 사용 방식  3~5꼭지           ...               ...
+기능 개괄       ...
+```
+
+합류 후에는 기존 configurator의 모든 후속 기능을 그대로 사용:
+- Step 4 보안 환경 (키워드 감지)
+- Step 6 고객사 맞춤
+- (#2) 모듈별 LD 설명 산문체
+- (#1) 시수 두 세트 토글
+
+### 1.6 백엔드 API 설계
+
+새 엔드포인트 2개 + 기존 엔드포인트 1개 확장.
+
+#### `api/builder-lite-candidates.js` (신규)
+
+```typescript
+POST /api/builder-lite-candidates
+Request:
+{
+  company: string,    // "범용" 또는 회사명
+  role: string,
+  tools: string[],    // 1개 이상
+  topic: string
+}
+Response:
+{
+  candidates: [
+    {
+      id: "c1",
+      title: string,           // M4 시나리오 제목
+      goal: string,            // 1줄 학습 목표
+      features: string[],      // 사용 feature 3~5개
+      deliverable: string      // 예상 산출물 1줄
+    },
+    // 3개
+  ],
+  validationWarnings: string[] // 일관성 경고 (있을 때만)
+}
+```
+
+- LLM: Claude Sonnet 4.6
+- 프롬프트 캐싱: 시스템 프롬프트 cache_control
+- 처리 시간 목표: 15~25초
+
+#### `api/builder-lite-assemble.js` (신규)
+
+```typescript
+POST /api/builder-lite-assemble
+Request:
+{
+  company, role, tools, topic,
+  selectedM4: {              // Step B에서 선택된 카드
+    title, goal, features, deliverable
+  }
+}
+Response:
+{
+  modules: [
+    {
+      level: "M1" | "M2" | "M3" | "M4",
+      title: string,
+      defaultHours: number,
+      learningContent: string[],  // bullet 배열
+      proseDescription?: string   // (#2 적용 시) 산문체 5~7줄
+    },
+    // 4개
+  ]
+}
+```
+
+- 처리 시간 목표: 30~40초
+
+#### `api/customize-curriculum.js` (기존, 확장)
+
+Builder Lite 결과 modules도 동일 입력 스키마로 받도록 변경. 추가 작업 거의 없음 — 이미 modules 배열 받음.
+
+### 1.7 프론트엔드 상태 관리 (App.jsx)
+
+```javascript
+const [mode, setMode] = useState('standard'); // 'standard' | 'builder-lite'
+
+// builder-lite 모드 전용 상태
+const [liteIntake, setLiteIntake] = useState({
+  company: '', role: '', tools: [], topic: ''
+});
+const [liteCandidates, setLiteCandidates] = useState(null);
+const [liteSelectedM4, setLiteSelectedM4] = useState(null);
+const [liteModules, setLiteModules] = useState(null);
+
+// 합류 — liteModules가 채워지면 기존 표준 모드의 selectedModules 자리 대체
+const effectiveModules = mode === 'builder-lite'
+  ? liteModules
+  : selectedModulesFromStandardFlow;
+```
+
+### 1.8 구현 추정 5~7일
+
+| 작업 | 추정 |
+|---|---|
+| Step A 4-field 폼 컴포넌트 | 0.5일 |
+| `api/builder-lite-candidates.js` + 프롬프트 설계 | 1.5일 |
+| Step B 카드 선택 UI | 0.5일 |
+| `api/builder-lite-assemble.js` + 프롬프트 설계 | 1.5일 |
+| 합류 로직 (mode 분기) + 상태 관리 | 1일 |
+| QA·프롬프트 튜닝 | 1~2일 |
+
+### 1.9 리스크와 완화책
+
+| 리스크 | 완화 |
+|---|---|
+| LLM이 생성한 M4 시나리오가 도메인적으로 어색 | 카드 3개 + "다시 생성" + 카드 1 fallback |
+| Lite 결과물 품질이 표준 N1~N11보다 떨어져 LD가 영업에 못 씀 | 결과물에 "AI 자동 생성 시안 — 표준화 전" 라벨 표기. 좋으면 매월 표준 시트에 환원 |
+| API 비용 — 호출당 ~$0.15~0.20 추정 | 표준 모드 ~$0.10보다 약간 비싸지만 영업 가치 대비 충분 |
+| 일관성 검증이 잘못 발동해 정상 입력을 차단 | 경고만 표시하고 진행은 허용 (hard block X) |
+
+---
+
+## 2. #2 — 모듈별 LD 설명 산문체
+
+### 2.1 한 줄 정의
+
+> "현재 학습내용 bullet만 표시되는 결과물에 모듈당 5~7줄 산문체 설명을 자동 추가하여, LD가 그대로 제안서에 붙여넣을 수 있게 한다."
+
+### 2.2 현재 상태와 문제
+
+현재 Step 5/6 결과:
+
+```
+[M1] 툴 소개
+- Figma 기본 사용법
+- 컴포넌트 개념
+- 라이브러리 활용
+```
+
+bullet은 강사용 가이드로는 충분하지만, LD가 제안서에 붙일 산문 카피로는 부족. 직접 작성에 모듈당 5~10분 소요.
+
+### 2.3 builder 출처 로직
+
+`skill-curriculum-final/SKILL.md` (Step 14):
+> "모듈별 LD 설명 4건(M1·M2·M3·M4 각 5-7줄 산문체)을 작성. 표 본체는 공정 3 산출 그대로 보존(글자 단위), LD 설명만 추가."
+
+`short_equivalent` 모듈은 3 요소 자연 포함:
+1. 정직성 표시 (long 모드인데 추가 거리 없어 short과 동일)
+2. 확장 어려움 사유
+3. 절감 시간 활용 제안
+
+### 2.4 UI 변경
+
+```
+[M1] 툴 소개                                     (1h)
+─────────────────────────────────────────────────
+• Figma 기본 사용법
+• 컴포넌트 개념
+• 라이브러리 활용
+
+📝 LD 설명
+디자이너 실무에서 Figma를 처음 접하는 학습자도
+30분 안에 협업 가능한 수준에 도달하도록 설계되었습니다.
+컴포넌트와 라이브러리 개념을 먼저 잡아두면 ...
+─────────────────────────────────────────────────
+
+         [복사 — 표만]  [복사 — 표+산문]
+```
+
+### 2.5 백엔드 변경
+
+`api/customize-curriculum.js` 응답 스키마 확장:
+
+```typescript
+modules: [{
+  ...기존 필드,
+  proseDescription: string  // 5~7줄 산문체
+}]
+```
+
+프롬프트에 builder의 산문 규칙 추가:
+- 모듈당 5~7줄
+- 한국어 산문체 (불릿 X)
+- [Report Format Preferences](feedback_report_format.md) 정합: 서술형·이모지 최소화·담당자 명시 X
+
+### 2.6 구현 추정 2~3일
+
+- 프롬프트 작성·튜닝: 1일
+- UI 컴포넌트 (산문 영역 + 복사 옵션 분리): 0.5일
+- QA: 0.5~1.5일
+
+### 2.7 리스크
+
+- 산문 길이가 일정치 않으면 표 정렬 깨질 수 있음 → max length 강제 + 줄바꿈 처리
+
+---
+
+## 3. #1 — 시수 두 세트 토글 (short 6h / long 12h)
+
+### 3.1 한 줄 정의
+
+> "현재 결과물에 시수 차원이 없어 영업 단계의 '몇 시간 과정인가요?' 질문에 즉답 불가. short/long 두 옵션을 토글로 동시에 보여준다."
+
+### 3.2 builder 출처 로직
+
+`skill-hours-blocks/SKILL.md` (Step 12):
+- **short**: 합 6h, 모듈별 1·1·2·2h. post-factcheck 본문 그대로 복사 + 시수 라벨
+- **long**: 합 12h, 모듈별 2·2·4·4h. **옵션 c 모듈별 차등 합성** — M3·M4 적극 재생성, M2·M1 추가 거리 있으면 합성·없으면 정직 표기 (`module_labels.{mN}: "short_equivalent"`)
+- 합성 순서: M4 → M3 → M2 → M1 (역산)
+
+### 3.3 UI 변경
+
+Step 5 최종 커리큘럼 상단에 토글:
+
+```
+시수 모드:  [● short 6h]  [○ long 12h]  [○ custom]
+
+[M1] 툴 소개         1h ↔ 2h
+[M2] When/Why        1h ↔ 2h
+[M3] 기초 실습       2h ↔ 4h
+[M4] 메인 실습       2h ↔ 4h
+─────────────────────
+                     6h ↔ 12h
+
+(long 모드 선택 시 "M2는 short과 동일 — short_equivalent" 같은 정직성 라벨 모듈에 표시)
+```
+
+### 3.4 백엔드 변경
+
+`api/rewrite-by-tool.js`와 `api/customize-curriculum.js` 모두에 `hourMode` 파라미터 추가.
+
+```typescript
+Request:
+{
+  ...기존 필드,
+  hourMode: 'short' | 'long'  // default 'short' (= 기존 동작)
+}
+
+Response:
+{
+  modules: [{
+    ...기존,
+    hours: { short: 1, long: 2 },
+    longLabel: 'expanded' | 'short_equivalent'
+  }]
+}
+```
+
+- short 모드: 기존 동작 그대로 + hours 필드만 추가
+- long 모드: M4·M3 학습내용을 확장 재합성 (LLM 추가 호출 — M4·M3만)
+- M2·M1: 학습내용 추가 거리 LLM 1차 판단 → 있으면 합성·없으면 short 복사 + `short_equivalent` 라벨
+
+### 3.5 구현 추정 3~4일
+
+- 백엔드 hourMode 처리 + long 재합성 프롬프트: 2일
+- UI 토글 + 시수 표시: 0.5일
+- 정직성 라벨 표시 로직: 0.5일
+- QA: 1일
+
+### 3.6 리스크
+
+- long 모드는 LLM 호출 2~3회 추가 → 비용 1.5배·시간 +20초
+- "추가 거리 없음" 판정이 잘못되면 short_equivalent가 과다 발생 (학습 가치 의심) → 자동 평가 룰 추가 필요
+
+---
+
+## 4. #3 — Tool Feature Factcheck 배치
+
+### 4.1 한 줄 정의
+
+> "moduleMaster.json은 매월 수동 업데이트. Tool feature가 stale되어도 자동 감지 X. 주 1회 cron으로 모든 모듈의 feature 신선도를 자동 진단한다."
+
+### 4.2 현재 상태와 문제
+
+`reference_curriculum_configurator.md`의 "데이터 업데이트 루틴":
+> "매월 1회 정기 업데이트 (수빈 님 요청 시 진행). 프로세스: 재분류 시트에 신규 제안서 추가 → Claude Code로 분석 → 표준 커리큘럼 시트 + JSON 업데이트 → git push → Vercel 자동 배포."
+
+문제: 매월까지의 신선도 gap. Tool feature가 빠르게 바뀌는 시점(2026-04-17 Lovable·v0 등 15개 삭제 사건)에 stale 모듈이 영업에 노출될 위험.
+
+### 4.3 builder 출처 로직
+
+`skill-factcheck/SKILL.md` (Step 10):
+- Phase 1 산출 m1~m4 모듈에서 등장하는 툴 feature를 현재 시점 기준으로 웹 검증
+- 문제 발견 시 대체 feature 선정 → 모듈 재구성 (`.v2.md` 별도 파일, 원본 보존)
+- `tool-features.json` SHA-256 pre/post 일치 의무 (Skill 3 불침해)
+
+### 4.4 두 가지 모드
+
+#### 모드 A — 운영자 배치 (추천)
+
+Vercel Cron으로 주 1회 (예: 월요일 03:00) 모든 모듈 factcheck → 결과를 `data/factcheck-stale-modules.json`에 저장 → 운영자 대시보드 `/admin/stale`에 표시.
+
+```
+[관리자 대시보드]                  마지막 검수: 2026-05-25 03:00
+────────────────────────────────────────────────────────
+주의 필요 모듈 3건:
+
+🔸 N1-M3-2 "Cursor 활용 코드 작성"
+   stale feature: "Cursor 0.x Composer 모드"
+   현재: 1.x로 명칭 변경, UI 변경됨
+   제안 대체: "Cursor 1.x Agent 모드"
+   [확인 → JSON 업데이트] [기각]
+
+🔸 N6-M4-1 "n8n 워크플로우 ..."
+   ...
+```
+
+수빈님의 매월 업데이트 루틴을 **주간 자동 trigger**로 전환 — 감지는 자동, 의사결정은 사람.
+
+#### 모드 B — 사용자 실시간
+
+Step 3 Tool 선택 직후 백그라운드로 factcheck 1회 실행 → "이 Tool의 X 기능이 변경되었습니다" 토스트.
+
+- 장점: 가장 신선
+- 단점: 매 세션마다 API 호출 (비용 1.3배·지연 +5초)
+
+**권장: 모드 A 우선 구현, 모드 B는 보류**.
+
+### 4.5 백엔드 설계 (모드 A)
+
+```
+vercel.json:
+{
+  "crons": [
+    { "path": "/api/cron/factcheck", "schedule": "0 3 * * 1" }
+  ]
+}
+
+api/cron/factcheck.js:
+  for each module in moduleMaster.json:
+    for each tool referenced:
+      WebSearch(tool + " " + feature) → 신선도 판정
+  Write data/factcheck-stale-modules.json
+  Send Slack notification to #skillmatch_작업현황
+```
+
+[SkillMatch Weekly Routine](reference_skillmatch_weekly_routine.md)과 동일 채널 활용. 무음 실패 대비 동일 진단 패턴 적용.
+
+### 4.6 구현 추정 5~7일
+
+- factcheck 프롬프트 + 평가 룰 설계: 2일
+- Vercel Cron 설정 + cron 함수: 1일
+- 운영자 대시보드 페이지: 1.5일
+- Slack 알림 통합: 0.5일
+- QA·로깅: 1~2일
+
+### 4.7 리스크
+
+- LLM 환각으로 잘못된 stale 판정 → 운영자 승인 절차 필수 (자동 JSON 수정 금지)
+- 143개 모듈 × 평균 2개 툴 = 286 검증 → 1회 cron당 ~$2~5 API 비용 (월 ~$20)
+
+---
+
+## 5. 우선순위 권장
+
+### 5.1 최종 권장 순서
+
+```
+Week 1     : #2 모듈별 LD 설명 산문체    (즉시 가치·Lite와 호환)
+Week 2~3   : ★ Builder Lite (3단계 + 합류)  (가장 큰 구조적 가치)
+Week 4~5   : #1 시수 두 세트 토글           (Lite 결과물에도 자동 적용)
+Week 6~7   : #3 Factcheck 배치 (모드 A)     (월간 루틴 자동화)
+```
+
+### 5.2 의존성
+
+```
+#2 (산문) ─┬─→ Builder Lite (Lite 결과물에 산문 자동 적용)
+           └─→ #1 (시수)       (short_equivalent 산문 처리 위해 #2 선행 권장)
+#1 (시수) ────→ Builder Lite (Lite도 시수 토글 가능해야 함)
+#3 (factcheck) — 독립 (다른 작업과 무관, 마지막 실행 OK)
+```
+
+### 5.3 빠른 실행 가능 슬라이스 (1주 안)
+
+#2만 우선 출시하면:
+- API customize-curriculum.js 응답 스키마 확장 1줄
+- 프롬프트에 산문 규칙 추가
+- UI에 산문 영역 + 복사 버튼 2개
+
+→ 1주일 내 production. LD가 즉시 제안서 작성 시간 절감 체감.
+
+---
+
+## 6. 다음 단계 의사결정 포인트
+
+본 문서는 의사결정 자료. 실제 구현 진입 전 결정 필요한 질문:
+
+1. **순서 확정**: 위 권장 순서대로? 아니면 Builder Lite를 1순위로 당김?
+2. **#2 산문 톤**: builder의 5~7줄을 그대로? 아니면 더 짧게(3~4줄)?
+3. **#1 시수 라벨링**: `short_equivalent` 영문 라벨 그대로? 한국어 (예: "단축 모드 동일")?
+4. **#3 Slack 채널**: `#skillmatch_작업현황` 재활용? 별도 채널 생성?
+5. **Builder Lite 결과물 환원**: Lite 결과가 좋으면 매월 표준 시트 환원 — 누가 결정·반영?
+
+---
+
+## 7. 참고
+
+- curriculum-builder SKILL.md 커밋: `b7811bb` (2026-05-26 기준)
+- configurator 최신 커밋: `f9232c3 refactor(ui): remove redundant info elements on Step3`
+- 관련 메모리:
+  - `reference_curriculum_configurator.md` — 36일 전 작성, 본 작업 전 일부 재검증 필요
+  - `feedback_configurator_ux.md` — 모듈 자유 선택·ID 숨김·학습내용 상세 표시·부정 맥락 처리
+  - `feedback_report_format.md` — 서술형·넘버링·이모지 최소화·담당자 불필요
+  - `project_curriculum_update_routine.md` — 매월 1회 정기 업데이트 루틴

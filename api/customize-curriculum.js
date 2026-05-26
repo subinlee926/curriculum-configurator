@@ -124,10 +124,53 @@ HR 업계: 채용 공고, 직무 기술서, 면접 질문지, 평가 보고서, 
 - "이 용어가 구글 검색에서 쉽게 확인되는가?" 아니면 → 일반화
 - 확신 못 할 때는 구체성을 포기하고 안전하게 가세요
 
+[모듈별 LD 설명 (proseDescription) 작성 규칙]
+
+각 모듈의 customizedContent(불릿)와 별개로, LD가 제안서에 그대로 붙여넣을 수 있는 산문체 모듈 설명을 함께 작성합니다.
+
+분량·형식:
+- 5~7줄 (약 220~320자)
+- 산문체. 불릿·번호 매기기·이모지·이모티콘 일절 금지
+- 평어체보다 정중한 서술형 ("~합니다", "~할 수 있습니다")
+
+내용 구성 (자연스럽게 녹여 쓰되 순서·라벨 명시 불필요):
+1) 이 모듈이 다루는 학습 주제와 실습 범위
+2) 해당 직무 실무에서 적용 가능한 구체 산출물·시나리오
+3) 교육 대상 수준에 비춘 학습 효용
+4) 모듈 완료 직후 업무에 가져갈 수 있는 결과물·역량
+
+톤앤매너 (사내 표준 정합):
+- 광고성·과장 표현 금지 ("혁신적", "압도적", "급격한 성장", "100% 보장" 등)
+- 담당자 호명 금지 ("강사가 ...", "교육생이 ..." 같은 주체 명시 회피)
+- 회사명·직무명을 매 줄 반복하지 않음 (한두 곳에서 맥락만 부여)
+- "본 모듈에서는 ...", "본 과정은 ..." 같은 깔끔한 도입부 사용
+- 회사 공개 정보(브랜드·제품·시장 포지션)는 customizedContent와 동일 기준으로 적극 활용. 내부 시스템·미공개 정보는 동일 기준으로 금지
+
+JSON 출력:
+- proseDescription 문자열 안에서도 인용·예시 표기는 홑따옴표(') 또는 꺾쇠(「」, ',') 만 사용
+- 이중 따옴표(") 절대 금지 — JSON 파싱 실패 위험
+- 줄바꿈은 \\n으로 escape하지 말고 자연스러운 한 단락으로 작성 (산문이므로 줄바꿈 자체가 불필요)
+
+좋은 예 (LG생활건강 브랜드 마케터, 중급, AI 이미지 생성 활용 모듈):
+"본 모듈에서는 후·오휘·숨37° 프레스티지 라인과 페리오·엘라스틴 생활용품의 광고 이미지를 AI 도구로 제작하는 워크플로우를 학습합니다. 브랜드 톤앤매너를 유지하는 프롬프트 설계부터 시안 변형, 후속 보정까지 실무 단계별로 다루며, 중급 수준의 마케터가 기존 캠페인 자산을 빠르게 보강할 수 있도록 구성했습니다. 실제 브랜드 케이스를 활용한 실습을 통해 학습 직후 시안 제작 시간을 의미 있게 단축할 수 있고, 광고 시즌 리드 타임에 대응하는 자체 제작 역량을 확보할 수 있습니다."
+
+나쁜 예 (불릿·이모지·과장):
+"🔥 이 모듈에서는 AI 도구를 활용한 혁신적 워크플로우를 배웁니다!
+- 시간 200% 단축
+- 비용 절감 효과 압도적
+- 브랜드 마케팅의 미래"
+
+자가 점검:
+- 산문에 불릿(-, •, 1. 등)이 한 줄이라도 있는가 → 재작성
+- "혁신적", "최고의", "압도적" 같은 과장 표현이 있는가 → 제거
+- 회사명만 접두 붙인 일반론(예: "LG생활건강의 마케팅을 학습합니다")인가 → 구체적 브랜드·산출물로 교체
+- 길이가 3줄 이하이거나 9줄 이상인가 → 5~7줄로 조정
+- 이중 따옴표(")가 있는가 → 홑따옴표·꺾쇠로 교체
+
 [JSON 출력 문법 규칙 — 매우 중요]
 응답 전체는 반드시 유효한 JSON 객체 하나여야 합니다. 다음 규칙을 엄격히 지키세요:
 
-1. customizedContent 문자열 안에서 인용이나 예시를 표기할 때는 **홑따옴표(')** 또는 **한국어 꺾쇠(「」, ',')** 만 사용하세요.
+1. customizedContent와 proseDescription 두 문자열 모두 안에서 인용이나 예시를 표기할 때는 **홑따옴표(')** 또는 **한국어 꺾쇠(「」, ',')** 만 사용하세요.
 2. JSON 구조의 키·값 경계를 나타내는 이중 따옴표(")는 JSON 문법에서만 사용하고, 문자열 값 내부에는 절대 쓰지 마세요. 내부에서 이중 따옴표를 쓰면 파싱 실패로 전체 응답이 버려집니다.
 3. Markdown 코드 펜스(\`\`\`)로 감싸지 마세요.
 4. JSON 외 서문·설명·후기를 출력하지 마세요.
@@ -155,7 +198,10 @@ HR 업계: 채용 공고, 직무 기술서, 면접 질문지, 평가 보고서, 
 - 출처 확인 어려운 임의 도구·시스템명 언급
 - 모듈명·시수·Tool 변경
 - 불릿 개수 변경
-- customizedContent 문자열 내부에 이중 따옴표(") 사용 (홑따옴표 ' 또는 꺾쇠 「」 로 교체)`;
+- customizedContent 또는 proseDescription 문자열 내부에 이중 따옴표(") 사용 (홑따옴표 ' 또는 꺾쇠 「」 로 교체)
+- proseDescription에 불릿(-, •, 숫자 매김)·이모지·과장 표현 포함
+- proseDescription이 5줄 미만이거나 8줄 초과
+- proseDescription 누락 (모든 모듈에 반드시 작성)`;
 
 function buildBatchPrompt({ company, role, level, audience, topicCode, topicName, modules }) {
   const moduleBlocks = modules
@@ -192,14 +238,16 @@ ${moduleBlocks}
   "modules": [
     {
       "id": "모듈 ID",
-      "customizedContent": "재작성된 학습 내용 (원본 불릿 개수 동일 유지)"
+      "customizedContent": "재작성된 학습 내용 (원본 불릿 개수 동일 유지)",
+      "proseDescription": "모듈별 LD 설명 산문체 5~7줄 (불릿·이모지·과장 표현 금지. 시스템 프롬프트의 작성 규칙 엄격 준수)"
     }
   ]
 }
 
 modules 배열에는 입력된 ${modules.length}개 모듈에 대한 재작성 결과가 모두 포함되어야 합니다.
+각 모듈마다 customizedContent와 proseDescription **두 필드 모두** 반드시 작성하세요 — proseDescription 누락 금지.
 JSON 외 다른 설명·서문·후기를 절대 출력하지 마세요. Markdown 코드 펜스(\`\`\`)로 감싸지 마세요.
-customizedContent 문자열 내부에 인용·예시를 쓸 때는 반드시 홑따옴표(') 또는 꺾쇠(「」)만 사용하세요. 이중 따옴표(")는 JSON 문법에서만 쓰고 문자열 값 안에는 절대 넣지 마세요.`;
+customizedContent와 proseDescription 두 문자열 모두 내부에 인용·예시를 쓸 때는 반드시 홑따옴표(') 또는 꺾쇠(「」)만 사용하세요. 이중 따옴표(")는 JSON 문법에서만 쓰고 문자열 값 안에는 절대 넣지 마세요.`;
 }
 
 // ====================================================================
@@ -241,18 +289,26 @@ function runDetectors(parsedModules, originalModules, company) {
     }
     const originalCount = countBullets(original.originalContent);
     const newCount = countBullets(m.customizedContent);
-    const allText = m.customizedContent ?? '';
+    // multilingual/hallucination 검사는 customizedContent와 proseDescription 둘 다 대상으로 수행.
+    // bullet 카운트 검사는 customizedContent만 (proseDescription은 산문이라 불릿 없음이 정상).
+    const allText = `${m.customizedContent ?? ''}\n${m.proseDescription ?? ''}`;
 
     const ml = detectMultilingualErrors(allText);
     const hall = detectHallucinationPatterns(allText, company);
     const bulletMismatch = newCount !== originalCount;
+    const proseMissing = !m.proseDescription || m.proseDescription.trim().length < 50;
+    const proseHasBullet = m.proseDescription
+      ? /(^|\n)\s*[-•▪◦·]/.test(m.proseDescription) || /(^|\n)\s*\d+[.)]\s/.test(m.proseDescription)
+      : false;
 
-    if (ml.length || hall.length || bulletMismatch) {
+    if (ml.length || hall.length || bulletMismatch || proseMissing || proseHasBullet) {
       report.push({
         id: m.id,
         bulletMismatch: bulletMismatch ? `${originalCount}->${newCount}` : null,
         multilingual: ml.length ? ml : null,
         hallucination: hall.length ? hall : null,
+        proseMissing: proseMissing || null,
+        proseHasBullet: proseHasBullet || null,
       });
     }
   }
@@ -334,7 +390,7 @@ function parseModelJson(text) {
 const client = new Anthropic();
 
 // 배포 버전 식별자 (Vercel 캐시 이슈 진단용)
-const APP_VERSION = 'v5-no-output-config';
+const APP_VERSION = 'v6-prose-description';
 
 // ====================================================================
 // 핸들러
@@ -385,8 +441,8 @@ export default async function handler(req, res) {
       modules: batchModules,
     });
 
-    // max_tokens: 모듈 수에 비례 (모듈당 약 500 토큰 여유 + 최소 1024)
-    const adaptiveMaxTokens = Math.min(8192, Math.max(1024, batchModules.length * 500 + 600));
+    // max_tokens: 모듈 수에 비례. proseDescription 추가로 모듈당 출력이 약 2배가 되어 1000 토큰/모듈로 상향.
+    const adaptiveMaxTokens = Math.min(16384, Math.max(1500, batchModules.length * 1000 + 800));
 
     return await client.messages.create({
       model: MODEL,
