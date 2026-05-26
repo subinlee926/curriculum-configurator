@@ -303,7 +303,7 @@ export default function App() {
           >
             <span style={styles.logoText}>FastCampus B2B</span>
             <span className="configurator-app-title" style={styles.appTitle}>
-              AI 커리큘럼 설정기
+              Curriculum Builder
             </span>
           </button>
           <div style={styles.headerRight}>

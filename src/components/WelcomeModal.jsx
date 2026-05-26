@@ -26,7 +26,7 @@ export default function WelcomeModal({ onClose }) {
           ×
         </button>
 
-        <h2 style={styles.title}>AI 커리큘럼 설정기에 오신 것을 환영해요</h2>
+        <h2 style={styles.title}>Curriculum Builder에 오신 것을 환영해요</h2>
         <p style={styles.subtitle}>
           어떤 흐름으로 시작할지 한 번만 안내해드릴게요. 언제든 헤더의{' '}
           <strong style={styles.inlineEmph}>가이드 다시 보기</strong>로 다시 열 수 있어요.
