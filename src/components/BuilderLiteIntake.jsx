@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { detectSecurityKeywords } from '../utils/detectSecurityKeywords';
 
 const LEVEL_OPTIONS = ['입문', '중급', '고급'];
 const HOURS_PRESETS = [4, 6, 8, 12, 16];
@@ -15,8 +16,19 @@ export default function BuilderLiteIntake({ initial, onAssembled, onCancel }) {
   const [customHoursText, setCustomHoursText] = useState(
     initial?.hours && !HOURS_PRESETS.includes(initial.hours) ? String(initial.hours) : ''
   );
+  const [securityText, setSecurityText] = useState(initial?.securityText ?? '');
+  const [detectedTags, setDetectedTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // 보안 텍스트 변경 시 300ms debounce로 키워드 감지
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const { tags } = detectSecurityKeywords(securityText);
+      setDetectedTags(tags);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [securityText]);
 
   const parsedTools = form.toolsText
     .split(/[,，]/)
@@ -65,6 +77,8 @@ export default function BuilderLiteIntake({ initial, onAssembled, onCancel }) {
           topic: form.topic.trim(),
           level: form.level,
           hours,
+          securityText: securityText.trim(),
+          detectedTags,
         }),
       });
       if (!res.ok) {
@@ -84,6 +98,8 @@ export default function BuilderLiteIntake({ initial, onAssembled, onCancel }) {
           topic: form.topic.trim(),
           level: form.level,
           hours,
+          securityText: securityText.trim(),
+          detectedTags,
         },
         modules: data.modules,
         hoursSum: data.hoursSum,
@@ -220,6 +236,48 @@ export default function BuilderLiteIntake({ initial, onAssembled, onCancel }) {
               {' '}— 모듈 개수와 구성은 AI가 시수에 맞춰 자동 결정합니다.
             </div>
           </div>
+
+          <div style={{ ...styles.field, gridColumn: '1 / -1' }}>
+            <label style={styles.label}>보안 환경 (선택)</label>
+            <textarea
+              value={securityText}
+              onChange={(e) => setSecurityText(e.target.value)}
+              placeholder={'예: 폐쇄망 환경, ChatGPT 차단, M365 보유 / Copilot 미포함\n비워두면 보안 제약 없이 생성됩니다.'}
+              style={styles.securityTextarea}
+              disabled={loading}
+            />
+            {detectedTags.length > 0 && (
+              <div style={styles.secTagRow}>
+                <span style={styles.secTagLabel}>감지된 보안 태그</span>
+                {detectedTags.map((tag) => (
+                  <span
+                    key={tag.태그}
+                    style={styles.secTagChip}
+                    title={
+                      [
+                        tag.설명,
+                        tag.효과?.제외Tool?.length
+                          ? `제외: ${tag.효과.제외Tool.join(', ')}`
+                          : null,
+                        tag.효과?.대체Tool?.length
+                          ? `대체: ${tag.효과.대체Tool.join(', ')}`
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' / ')
+                    }
+                  >
+                    {tag.태그}
+                  </span>
+                ))}
+              </div>
+            )}
+            {securityText.trim() && detectedTags.length === 0 && (
+              <div style={styles.secNoTag}>
+                특별한 보안 키워드는 감지되지 않았습니다. 입력 내용은 그대로 AI 생성에 반영됩니다.
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={styles.formActions}>
@@ -354,6 +412,46 @@ const styles = {
   hoursHintValue: {
     color: '#1f3864',
     fontWeight: 700,
+  },
+  securityTextarea: {
+    padding: '10px 12px',
+    border: '1px solid #d1d5db',
+    borderRadius: 6,
+    fontSize: 13,
+    background: '#fff',
+    fontFamily: 'inherit',
+    lineHeight: 1.6,
+    minHeight: 70,
+    resize: 'vertical',
+    boxSizing: 'border-box',
+  },
+  secTagRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+    marginTop: 8,
+  },
+  secTagLabel: {
+    fontSize: 11,
+    color: '#6b7280',
+    fontWeight: 600,
+    letterSpacing: 0.3,
+  },
+  secTagChip: {
+    background: '#fef3c7',
+    color: '#92400e',
+    border: '1px solid #fde68a',
+    borderRadius: 4,
+    padding: '2px 8px',
+    fontSize: 11,
+    fontWeight: 700,
+    cursor: 'help',
+  },
+  secNoTag: {
+    fontSize: 11,
+    color: '#16a34a',
+    marginTop: 6,
   },
   formActions: { display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'flex-end' },
   primaryBtn: {

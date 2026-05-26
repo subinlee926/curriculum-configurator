@@ -11,6 +11,7 @@
 | 1 | #2 모듈별 LD 설명 산문체 | **배포 완료** (Step 6 고객사 맞춤) | 2026-05-26 |
 | 2~3 | Builder Lite v1 (4-field + M4 후보 + 합성) | 폐기 — 사용자 피드백으로 v2로 재설계 | 2026-05-26 |
 | 2~3 | Builder Lite v2 (5-field + 단일 생성 + 재생성) | **배포 완료** — 새 설계 | 2026-05-26 |
+| 2~3 | Builder Lite v2.1 (보안 환경 입력 통합) | **배포 완료** — intake 6-field로 확장 | 2026-05-26 |
 | 4~5 | #1 시수 두 세트 토글 | 보류 (Lite v2가 시수를 직접 입력받으므로 가치 감소 — 표준 모드에만 적용 검토) |  |
 | 6~7 | #3 Factcheck 배치 | 보류 |  |
 
@@ -70,6 +71,26 @@ v1 (M4 후보 카드 단계 포함)을 사용자 검토 후 다음 3가지 문�
 - `src/App.jsx` — handleLiteRegenerateAll, handleLiteRegenerateOne, liteRegenLoading 상태, lite 모드 Step 6 건너뛰기
 - `src/components/Step5Result.jsx` — proseDescription 셀 표시, lite 작업 컬럼, 전체 재생성 액션바, 시수 불일치 배지
 - 삭제: `api/builder-lite-candidates.js` (M4 후보 단계 폐기), `api/builder-lite-assemble.js` (generate로 통합)
+
+### v2.1 보안 환경 입력 통합 (2026-05-26)
+
+표준 모드의 Step 4 보안 환경 단계가 Lite에는 빠져 있어 도구 충돌 감지가 안 됐던 문제 해결.
+
+**구현**:
+- `src/utils/detectSecurityKeywords.js` 신규 — Step4의 부정 패턴 확장(`구글, 노션 불가` → `구글 불가, 노션 불가`) + 키워드 매칭 + 태그 dedup 로직을 util로 분리. Step4와 Lite가 동일 어휘 공유
+- `BuilderLiteIntake.jsx` 6-field로 확장 — 보안 환경 textarea 추가(선택 입력), 300ms debounce 후 실시간 키워드 감지, 감지 태그 칩(hover 시 tooltip)
+- `api/builder-lite-generate.js` SYSTEM_PROMPT에 보안 제약 반영 섹션 추가 — **사후 경고 X, 사전 반영 O**:
+  1. 제외 도구는 모듈에서 언급하지 않음
+  2. 대체 도구로 자연 전환 (대체 흔적 노출 X)
+  3. 환경 제약(폐쇄망·DLP)을 학습내용에 사실로만 반영
+  4. 모듈 조정 안내 따르기
+  5. proseDescription에 한 줄 자연 언급
+  6. 보안 입력 비어있으면 제약 없이 생성
+- `buildSecurityBlock` 함수가 user prompt에 보안 컨텍스트 주입 (자동 감지 태그 상세 + LD 자유 텍스트)
+- `App.jsx`: handleLiteAssembled가 intake의 securityText/detectedTags를 standard 상태(securityText·detectedTags)에도 저장 → Step 5의 도구 충돌 비고/태그 노출 자동 작동. 재생성(전체·모듈별) 호출에도 보안 정보 함께 전달
+- APP_VERSION: v2→v3 (`v3-builder-lite-generate-with-security`)
+
+**왜 사전 반영인가**: 표준 모드는 모듈을 미리 선택해놓은 상태라 Step 4가 사후 경고로 작동(비고 컬럼). Lite는 AI가 처음부터 생성하니까 보안 제약을 받으면 그에 맞는 도구·시나리오로 처음부터 만들기가 더 자연스러움. 같은 보안 입력이라도 도구 흐름에 따라 활용 시점이 달라지는 인사이트.
 
 ### 학습 — 이 재설계가 가르치는 교훈
 

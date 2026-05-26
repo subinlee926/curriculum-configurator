@@ -149,8 +149,9 @@ export default function App() {
     setSelectedModules(moduleIds);
     setToolSelections(toolMap);
     setToolRewrittenContent({});
-    setSecurityText('');
-    setDetectedTags([]);
+    // intake에 들어온 보안 정보를 standard 상태에도 반영 (Step5 표시·복사용)
+    setSecurityText(intake.securityText || '');
+    setDetectedTags(intake.detectedTags || []);
     setCustomization({
       company: intake.company || '',
       role: intake.role || '',
@@ -184,6 +185,8 @@ export default function App() {
           topic: liteIntake.topic,
           level: liteIntake.level,
           hours: liteIntake.hours,
+          securityText: liteIntake.securityText || '',
+          detectedTags: liteIntake.detectedTags || [],
         }),
       });
       if (!res.ok) {
@@ -229,6 +232,8 @@ export default function App() {
           topic: liteIntake.topic,
           level: liteIntake.level,
           hours: liteIntake.hours,
+          securityText: liteIntake.securityText || '',
+          detectedTags: liteIntake.detectedTags || [],
           regenerateOnly: {
             moduleId,
             existingModules: existingForApi,

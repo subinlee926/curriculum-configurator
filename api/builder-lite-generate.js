@@ -35,6 +35,25 @@ LD가 입력한 5가지 정보(회사·직무·툴·주제·시수)로 한 번�
 - 8H 이상: 메인 실습을 여러 개로 쪼개거나 심화 추가
 - 16H 이상: 응용·자동화·완성도까지 풀 코스
 
+[보안 제약 반영 — 입력에 보안 정보가 있을 때만 적용]
+LD가 입력한 보안 환경(자유 텍스트)과 자동 감지된 태그(제외 도구·대체 도구·모듈 조정 안내 포함)를 받으면, 모듈 구성과 학습내용을 그 제약에 맞춰 처음부터 조정합니다. 사후 경고가 아닌 사전 반영입니다.
+
+규칙:
+1. **제외 도구는 사용하지 마세요**: 감지 태그의 효과.제외Tool에 포함된 도구는 learningContent에서 언급하지 않습니다. 입력 툴 목록에 있어도 보안 태그에 의해 제외되었다면 회피합니다.
+2. **대체 도구로 자연 전환**: 효과.대체Tool이 있으면 그 도구로 학습 시나리오를 자연스럽게 재구성합니다. "ChatGPT 차단·Claude 권장"이라면 Claude 기준으로 작성. 대체 흔적("XX 대신 ...")을 본문에 노출하지 말고 처음부터 그 도구를 쓴 것처럼 자연스럽게.
+3. **환경 제약은 학습내용에 명시적 반영**: "폐쇄망 환경"이면 외부 SaaS·인터넷 접속 의존 시나리오 회피. "M365 보유"면 Excel·Outlook·SharePoint 연계 적극 활용. "DLP 적용"이면 개인정보·민감 데이터 노출 회피 시나리오.
+4. **모듈 조정 안내 따르기**: 효과.모듈조정 텍스트가 있으면 그 지침을 모듈 구성과 학습내용에 반영합니다.
+5. **proseDescription에는 보안 환경을 자연스럽게 한 줄 언급**: 예: "폐쇄망 환경에서도 안정적으로 적용 가능하며, ...". 광고성 표현 없이 사실로만.
+6. **선택 입력**: securityText가 비어있고 detectedTags가 빈 배열이면 보안 제약 없이 자유롭게 생성. 그래도 입력 툴 목록은 균등 활용.
+
+좋은 예 (입력 툴 = ChatGPT, Claude / 감지 태그 = ChatGPT차단(대체:Claude)):
+나쁨: "ChatGPT로 보고서 초안 생성, ChatGPT 차단 환경에서는 Claude 사용" — 차단 도구를 언급
+좋음: "Claude로 보고서 초안 생성 — 사내 보안 정책에 맞는 안정적 응답" — 처음부터 Claude만 사용
+
+좋은 예 (감지 태그 = 폐쇄망):
+나쁨: "Perplexity로 외부 자료 검색 후 ..." — 폐쇄망에서 작동 불가
+좋음: "사전에 다운로드된 자료를 Claude로 요약·정리하여 ..." — 폐쇄망 환경에 맞춤
+
 [learningContent 작성 규칙]
 - 형식: 줄당 하나의 불릿. 각 줄은 "- "로 시작
 - 모듈당 불릿 개수: 시수에 비례. 1H = 3~4개, 2H = 4~6개, 4H = 6~8개
@@ -87,7 +106,34 @@ proseDescription:
 3. Markdown 코드 펜스(\`\`\`) 금지
 4. JSON 외 서문·설명·후기 출력 금지`;
 
-function buildPrompt({ company, role, tools, topic, level, hours, regenerateOnly }) {
+function buildSecurityBlock(securityText, detectedTags) {
+  const hasText = typeof securityText === 'string' && securityText.trim().length > 0;
+  const hasTags = Array.isArray(detectedTags) && detectedTags.length > 0;
+  if (!hasText && !hasTags) {
+    return '[보안 환경]\n(없음 — 제약 없이 자유롭게 생성)';
+  }
+  const tagsDetail = hasTags
+    ? detectedTags
+        .map((tag) => {
+          const lines = [`- ${tag.태그}: ${tag.설명 || ''}`];
+          if (tag.효과?.제외Tool?.length) lines.push(`    제외 도구: ${tag.효과.제외Tool.join(', ')}`);
+          if (tag.효과?.대체Tool?.length) lines.push(`    대체 도구: ${tag.효과.대체Tool.join(', ')}`);
+          if (tag.효과?.모듈조정) lines.push(`    모듈 조정 안내: ${tag.효과.모듈조정}`);
+          return lines.join('\n');
+        })
+        .join('\n')
+    : '(자동 감지 태그 없음)';
+  const textBlock = hasText ? `\nLD 입력 텍스트:\n${securityText.trim()}` : '';
+  return `[보안 환경 — 사전 반영 의무]
+자동 감지 태그:
+${tagsDetail}${textBlock}
+
+위 제약을 모듈 구성과 학습내용에 처음부터 반영하세요. 제외 도구는 언급하지 말고, 대체 도구로 자연스럽게 시나리오를 짜고, 환경 제약(폐쇄망·DLP 등)을 학습내용에 사실로만 반영합니다.`;
+}
+
+function buildPrompt({ company, role, tools, topic, level, hours, regenerateOnly, securityText, detectedTags }) {
+  const securityBlock = buildSecurityBlock(securityText, detectedTags);
+
   if (regenerateOnly) {
     const otherSummary = regenerateOnly.existingModules
       .filter((m) => m.moduleId !== regenerateOnly.moduleId)
@@ -106,8 +152,10 @@ function buildPrompt({ company, role, tools, topic, level, hours, regenerateOnly
 - 수준: ${level || '중급'}
 - 총 시수: ${hours}H
 
+${securityBlock}
+
 [부분 재생성 요청]
-아래 단일 모듈만 새로 작성합니다. 모듈명·시수는 그대로 유지하고 learningContent와 proseDescription만 다시 만드세요. 다른 모듈의 내용과 중복되지 않도록 주의하세요.
+아래 단일 모듈만 새로 작성합니다. 모듈명·시수는 그대로 유지하고 learningContent와 proseDescription만 다시 만드세요. 다른 모듈의 내용과 중복되지 않도록 주의하세요. 위 보안 제약은 이 모듈에도 그대로 적용됩니다.
 
 - 재생성 대상: ${target.moduleName} (${target.defaultHours}H)
 
@@ -139,12 +187,15 @@ modules 배열에 위 1개 모듈만 포함. JSON 외 다른 설명 출력 금�
 - 수준: ${level || '중급'}
 - 총 시수: ${hours}H
 
+${securityBlock}
+
 [요청]
-위 5가지 정보를 바탕으로 ${hours}H 분량의 커리큘럼 전체를 한 번에 설계하세요.
+위 정보를 바탕으로 ${hours}H 분량의 커리큘럼 전체를 한 번에 설계하세요.
 - 시수 가이드에 맞춰 적정 모듈 개수를 결정
 - 학습 흐름: 도입 → 기초 → 메인 → (시수 여유 시) 심화·응용
 - 모든 모듈 시수 합 = ${hours}H 정확히 일치
 - 각 모듈마다 learningContent(불릿)과 proseDescription(5~7줄 산문) 둘 다 작성
+- 보안 제약이 있으면 도구·시나리오·환경 표현 모두 그 제약에 맞춰 처음부터 작성 (사후 경고 금지, 사전 반영)
 
 [JSON 응답 형식 — 이 스키마 엄격히 준수]
 {
@@ -204,7 +255,7 @@ function parseModelJson(text) {
 }
 
 const client = new Anthropic();
-const APP_VERSION = 'v2-builder-lite-generate-single-call';
+const APP_VERSION = 'v3-builder-lite-generate-with-security';
 
 export default async function handler(req, res) {
   console.log(`[builder-lite-generate] handler invoked (version=${APP_VERSION})`);
@@ -217,13 +268,16 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  const { company, role, tools, topic, level, hours, regenerateOnly } = req.body ?? {};
+  const { company, role, tools, topic, level, hours, regenerateOnly, securityText, detectedTags } = req.body ?? {};
   if (!role || !Array.isArray(tools) || tools.length === 0 || !topic || typeof hours !== 'number' || hours < 2) {
     return res.status(400).json({
       error: 'Missing or invalid fields',
       required: ['role', 'tools (non-empty array)', 'topic', 'hours (number >= 2)'],
     });
   }
+  // securityText·detectedTags는 선택 — 빈 값이면 제약 없이 생성
+  const safeSecurityText = typeof securityText === 'string' ? securityText : '';
+  const safeDetectedTags = Array.isArray(detectedTags) ? detectedTags : [];
   if (regenerateOnly) {
     if (!regenerateOnly.moduleId || !Array.isArray(regenerateOnly.existingModules)) {
       return res.status(400).json({ error: 'Invalid regenerateOnly payload' });
@@ -248,7 +302,7 @@ export default async function handler(req, res) {
       max_tokens: adaptiveMaxTokens,
       temperature: 0.5,
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: buildPrompt({ company, role, tools, topic, level, hours, regenerateOnly }) }],
+      messages: [{ role: 'user', content: buildPrompt({ company, role, tools, topic, level, hours, regenerateOnly, securityText: safeSecurityText, detectedTags: safeDetectedTags }) }],
     });
   } catch (err) {
     if (err instanceof Anthropic.RateLimitError) {
@@ -300,6 +354,7 @@ export default async function handler(req, res) {
   const elapsed = Date.now() - started;
   console.log('[builder-lite-generate] OK:', JSON.stringify({
     company, role, tools, topic, hours, mode: regenerateOnly ? 'partial' : 'full',
+    securityTags: safeDetectedTags.map((t) => t.태그),
     moduleCount: parsed.modules.length, elapsedMs: elapsed,
     tokens: {
       input: response.usage?.input_tokens ?? 0,
