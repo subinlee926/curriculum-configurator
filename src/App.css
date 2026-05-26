@@ -19,3 +19,22 @@
   0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
   30% { transform: translateY(-4px); opacity: 1; }
 }
+
+/* Header logo button — 클릭 가능 affordance */
+.configurator-logo-btn {
+  transition: opacity 0.15s;
+}
+.configurator-logo-btn:hover {
+  opacity: 0.85;
+}
+.configurator-logo-btn:hover .configurator-app-title {
+  text-decoration: underline;
+  text-decoration-color: #93c5fd;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+.configurator-logo-btn:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 4px;
+  border-radius: 4px;
+}

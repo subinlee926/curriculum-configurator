@@ -293,10 +293,19 @@ export default function App() {
       {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerInner}>
-          <div style={styles.logoArea}>
-            <div style={styles.logoText}>FastCampus B2B</div>
-            <div style={styles.appTitle}>AI 커리큘럼 설정기</div>
-          </div>
+          <button
+            type="button"
+            className="configurator-logo-btn"
+            style={styles.logoBtn}
+            onClick={handleReset}
+            title="첫 화면으로 돌아가기 — 현재 작업은 초기화됩니다"
+            aria-label="홈으로 이동"
+          >
+            <span style={styles.logoText}>FastCampus B2B</span>
+            <span className="configurator-app-title" style={styles.appTitle}>
+              AI 커리큘럼 설정기
+            </span>
+          </button>
           <div style={styles.headerRight}>
             <button
               type="button"
@@ -459,6 +468,19 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 2,
+  },
+  logoBtn: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    margin: 0,
+    cursor: 'pointer',
+    textAlign: 'left',
+    font: 'inherit',
+    color: 'inherit',
   },
   logoText: {
     color: '#93c5fd',
