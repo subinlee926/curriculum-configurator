@@ -3,6 +3,7 @@ import moduleMaster from '../data/moduleMaster.json';
 import topics from '../data/topics.json';
 import { getModuleDefaultTool } from '../utils/getDefaultTool';
 import LoadingOverlay from './LoadingOverlay';
+import HelpTip from './HelpTip';
 
 const CUSTOMIZE_PHASES = [
   { startSec: 0,  text: '회사·직무·교육 대상 맥락 분석 중' },
@@ -33,6 +34,7 @@ export default function Step6Customization({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [regeneratingId, setRegeneratingId] = useState(null);
+  const [regenFeedback, setRegenFeedback] = useState('');
   const [copied, setCopied] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const cooldownIntervalRef = useRef(null);
@@ -128,6 +130,7 @@ export default function Step6Customization({
       topicCode: selectedTopic,
       topicName: topicMeta?.명 ?? '',
       modules: buildRequestModules(),
+      regenerationFeedback: regenFeedback.trim(),
     };
 
     const res = await fetch('/api/customize-curriculum', {
@@ -199,6 +202,7 @@ export default function Step6Customization({
             originalContent: row.originalContent,
           },
         ],
+        regenerationFeedback: regenFeedback.trim(),
       });
       const updated = data.customizedModules?.[0];
       if (updated) {
@@ -435,6 +439,26 @@ export default function Step6Customization({
             </button>
           </div>
 
+          <div style={styles.feedbackRow}>
+            <label style={styles.feedbackLabel}>
+              재생성 의견 (선택)
+              <HelpTip
+                placement="right"
+                text="맞춤 결과가 마음에 들지 않으면 방향성을 남기고 재생성하세요. 예) '게임 업계 용어를 더 써주세요' / '실습 예시를 바꿔주세요' / '톤을 더 정중하게'. 모듈·시수·Tool·불릿 개수는 고정이라 바뀌지 않고, 내용 표현만 조정됩니다."
+              />
+            </label>
+            <textarea
+              value={regenFeedback}
+              onChange={(e) => setRegenFeedback(e.target.value)}
+              placeholder="예) 게임 업계 용어를 더 써주세요 / 실습 예시를 바꿔주세요 / 톤을 더 정중하게 / 2번 모듈이 약합니다"
+              style={styles.feedbackTextarea}
+              disabled={loading || regeneratingId !== null}
+            />
+            <div style={styles.feedbackHint}>
+              전체·모듈별 재생성 모두 이 의견을 함께 보냅니다. 비워두면 의견 없이 재생성됩니다. 모듈 구성(개수·시수·Tool)은 의견과 무관하게 고정됩니다.
+            </div>
+          </div>
+
           <div style={styles.tableWrapper}>
             <table style={styles.table}>
               <thead>
@@ -644,6 +668,41 @@ const styles = {
     cursor: 'pointer',
   },
   toggleBtnActive: { background: '#fff', color: '#1f3864', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' },
+  feedbackRow: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    background: '#f0f4ff',
+    border: '1px solid #c7d2fe',
+    borderRadius: 8,
+    padding: '12px 14px',
+    marginBottom: 12,
+  },
+  feedbackLabel: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: '#1f3864',
+    letterSpacing: 0.3,
+  },
+  feedbackTextarea: {
+    width: '100%',
+    minHeight: 50,
+    padding: '8px 12px',
+    border: '1px solid #c7d2fe',
+    borderRadius: 6,
+    fontSize: 13,
+    background: '#fff',
+    fontFamily: 'inherit',
+    lineHeight: 1.5,
+    resize: 'vertical',
+    boxSizing: 'border-box',
+    outline: 'none',
+  },
+  feedbackHint: {
+    fontSize: 11,
+    color: '#475569',
+    lineHeight: 1.5,
+  },
   regenAllBtn: {
     background: '#fff',
     color: '#1f3864',

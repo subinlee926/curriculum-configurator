@@ -167,6 +167,24 @@ JSON 출력:
 - 길이가 3줄 이하이거나 9줄 이상인가 → 5~7줄로 조정
 - 이중 따옴표(")가 있는가 → 홑따옴표·꺾쇠로 교체
 
+[재생성 의견 반영 — regenerationFeedback이 있을 때만]
+LD가 결과를 보고 재생성 시 의견(자유 텍스트)을 함께 보냈다면, 그 의견을 이번 재작성에 반영합니다.
+이 도구의 모듈 구성(모듈명·시수·Tool·불릿 개수)은 LD가 이미 확정한 것이라 **변경 대상이 아닙니다**. 의견은 오직 각 불릿·proseDescription의 표현·강조점·예시를 다듬는 데만 씁니다.
+- 의견 예시와 반영 방법:
+  - "더 구체적으로" → 남아있는 일반 명사를 직무 산출물·지표 이름으로 더 적극 교체
+  - "○○ 브랜드/제품을 더 활용해주세요" → 해당 공개 정보를 본문에 더 자주 녹임 (환각 방지 규칙 한도 내)
+  - "톤을 더 정중하게 / 더 간결하게" → customizedContent·proseDescription 어조 조정
+  - "실습 예시를 바꿔주세요" → [실습] 항목의 시나리오를 다른 산출물·상황으로 재구성 (불릿 개수는 유지)
+  - "○○ 직무 용어가 약합니다" → 해당 직무 표준 용어 밀도 강화
+  - "특정 모듈이 약합니다" → 부분 재생성이면 그 모듈만, 전체 재생성이면 그 모듈을 중점 보강
+- 의견이 비어있으면 평소 규칙대로 작성
+
+**우선순위 (충돌 시)**:
+1. 구조 불변 규칙 (모듈명·시수·Tool·불릿 개수 변경 금지) — 절대 우선
+2. 환각 방지 규칙 (내부 정보 추측 금지) — 절대 우선
+3. 재생성 의견 — 위 두 규칙을 위배하지 않는 한 적극 반영
+충돌 예: "모듈을 하나 더 추가해주세요" 또는 "불릿을 줄여주세요"는 구조 불변 규칙 위반이므로 따르지 않습니다. 의견은 기존 모듈·불릿의 내용 표현 조정에만 적용합니다.
+
 [JSON 출력 문법 규칙 — 매우 중요]
 응답 전체는 반드시 유효한 JSON 객체 하나여야 합니다. 다음 규칙을 엄격히 지키세요:
 
@@ -203,7 +221,18 @@ JSON 출력:
 - proseDescription이 5줄 미만이거나 8줄 초과
 - proseDescription 누락 (모든 모듈에 반드시 작성)`;
 
-function buildBatchPrompt({ company, role, level, audience, topicCode, topicName, modules }) {
+function buildFeedbackBlock(regenerationFeedback) {
+  if (!regenerationFeedback || typeof regenerationFeedback !== 'string' || !regenerationFeedback.trim()) {
+    return '';
+  }
+  return `\n[재생성 의견 — LD가 이전 결과를 보고 남긴 방향성]
+${regenerationFeedback.trim()}
+
+위 의견을 이번 재작성에 반영하세요. 단 구조 불변 규칙(모듈명·시수·Tool·불릿 개수 유지)과 환각 방지 규칙은 절대 우선이며, 의견은 그 다음입니다. 의견이 구조 변경을 요구해도 구조는 고정한 채 내용 표현만 조정합니다.`;
+}
+
+function buildBatchPrompt({ company, role, level, audience, topicCode, topicName, modules, regenerationFeedback }) {
+  const feedbackBlock = buildFeedbackBlock(regenerationFeedback);
   const moduleBlocks = modules
     .map(
       (m, i) => `---
@@ -227,6 +256,7 @@ ${m.originalContent}`
 [주제]
 - 코드: ${topicCode}
 - 이름: ${topicName}
+${feedbackBlock}
 
 [재작성 대상 모듈들] (총 ${modules.length}개)
 각 모듈의 원본 학습 내용을 ${company} ${role} 직무 맥락으로 재작성하세요.
@@ -390,7 +420,7 @@ function parseModelJson(text) {
 const client = new Anthropic();
 
 // 배포 버전 식별자 (Vercel 캐시 이슈 진단용)
-const APP_VERSION = 'v6-prose-description';
+const APP_VERSION = 'v7-regeneration-feedback';
 
 // ====================================================================
 // 핸들러
@@ -408,7 +438,9 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  const { company, role, level, audience, topicCode, topicName, modules } = req.body ?? {};
+  const { company, role, level, audience, topicCode, topicName, modules, regenerationFeedback } = req.body ?? {};
+  // regenerationFeedback은 선택 — 비어있으면 평소 규칙대로 재작성
+  const safeFeedback = typeof regenerationFeedback === 'string' ? regenerationFeedback : '';
 
   if (!company || !role || !level || !audience || !topicCode || !Array.isArray(modules) || modules.length === 0) {
     return res.status(400).json({
@@ -439,6 +471,7 @@ export default async function handler(req, res) {
       topicCode,
       topicName,
       modules: batchModules,
+      regenerationFeedback: safeFeedback,
     });
 
     // max_tokens: 모듈 수에 비례. proseDescription 추가로 모듈당 출력이 약 2배가 되어 1000 토큰/모듈로 상향.
@@ -555,6 +588,7 @@ export default async function handler(req, res) {
         role,
         moduleCount: modules.length,
         batches: batches.length,
+        feedbackProvided: safeFeedback.trim().length > 0,
         elapsedMs: elapsed,
         tokens: {
           input: totalInputTokens,
