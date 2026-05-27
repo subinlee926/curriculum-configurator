@@ -5,6 +5,17 @@ import { getModuleDefaultTool } from '../utils/getDefaultTool';
 import HelpTip from './HelpTip';
 import LoadingOverlay from './LoadingOverlay';
 
+// 클립보드 복사용 TSV 셀 escape.
+// 셀 안에 줄바꿈·탭·따옴표가 있으면 큰따옴표로 감싸고 내부 따옴표는 두 번 반복.
+// 이렇게 해야 구글 시트·엑셀에 붙여넣을 때 불릿 줄바꿈이 한 셀 안에서 유지된다.
+function csvCell(text) {
+  const s = String(text ?? '');
+  if (/[\n\t"]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
 const LITE_REGEN_ALL_PHASES = [
   { startSec: 0,  text: '입력 분석 + 의견 반영 중' },
   { startSec: 8,  text: '모듈 구성 다시 결정 중' },
@@ -86,7 +97,7 @@ export default function Step5Result({
         if (includeProse && r.proseDescription) {
           content = `${content}\n\n[LD 설명]\n${r.proseDescription}`;
         }
-        return [r.순서, r.모듈명, content.replace(/\n/g, ' '), formatHours(r.시수), r.Tool, r.비고].join('\t');
+        return [r.순서, csvCell(r.모듈명), csvCell(content), formatHours(r.시수), csvCell(r.Tool), csvCell(r.비고)].join('\t');
       })
       .join('\n');
     const footer = `\n합계\t${curriculumRows.length}개 모듈\t\t${formatHours(totalHours)}\t\t`;

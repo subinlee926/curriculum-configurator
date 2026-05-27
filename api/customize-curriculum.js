@@ -17,6 +17,7 @@ const SYSTEM_PROMPT = `당신은 기업 AI 교육 커리큘럼을 특정 고객�
 4. 실습 내용은 표준 커리큘럼 깊이 수준 (한 줄~두 줄 요약) 을 유지합니다
 5. 모듈명·시수·Tool 은 절대 변경하지 않습니다
 6. 여러 모듈을 동시에 처리할 때, 모든 모듈에 동일한 퀄리티를 적용합니다 (첫 모듈만 잘 하고 나머지를 대충 하지 말 것)
+7. **각 불릿은 간결한 명사구로, 원본과 비슷한 길이(약 15~40자)를 유지합니다.** 구체화한다고 완결 문장으로 늘이지 말 것 — 일반 명사를 직무 산출물 이름으로 '교체'하되 전체 길이는 원본 수준으로 압축합니다. 실제 제안서 커리큘럼표는 짧은 명사구 나열이 표준 톤입니다 ("~을 학습합니다", "~할 수 있습니다" 같은 서술형 문장체 금지)
 
 [작업 방식 — 각 불릿마다 독립적으로 3단계 수행]
 각 불릿을 처리할 때 내부적으로 다음 3단계를 반드시 거치세요:
@@ -129,11 +130,11 @@ HR 업계: 채용 공고, 직무 기술서, 면접 질문지, 평가 보고서, 
 각 모듈의 customizedContent(불릿)와 별개로, LD가 제안서에 그대로 붙여넣을 수 있는 산문체 모듈 설명을 함께 작성합니다.
 
 분량·형식:
-- 5~7줄 (약 220~320자)
+- **2~3줄 (약 90~140자)** — 짧고 밀도 있게. 4줄 이상으로 늘이지 말 것. 실제 제안서는 모듈별 산문이 짧거나 없으므로 핵심만 압축
 - 산문체. 불릿·번호 매기기·이모지·이모티콘 일절 금지
 - 평어체보다 정중한 서술형 ("~합니다", "~할 수 있습니다")
 
-내용 구성 (자연스럽게 녹여 쓰되 순서·라벨 명시 불필요):
+내용 구성 (2~3줄 안에 핵심만 — 아래 4가지를 다 넣지 말고 가장 중요한 1~2개만 자연스럽게 선택):
 1) 이 모듈이 다루는 학습 주제와 실습 범위
 2) 해당 직무 실무에서 적용 가능한 구체 산출물·시나리오
 3) 교육 대상 수준에 비춘 학습 효용
@@ -151,8 +152,8 @@ JSON 출력:
 - 이중 따옴표(") 절대 금지 — JSON 파싱 실패 위험
 - 줄바꿈은 \\n으로 escape하지 말고 자연스러운 한 단락으로 작성 (산문이므로 줄바꿈 자체가 불필요)
 
-좋은 예 (LG생활건강 브랜드 마케터, 중급, AI 이미지 생성 활용 모듈):
-"본 모듈에서는 후·오휘·숨37° 프레스티지 라인과 페리오·엘라스틴 생활용품의 광고 이미지를 AI 도구로 제작하는 워크플로우를 학습합니다. 브랜드 톤앤매너를 유지하는 프롬프트 설계부터 시안 변형, 후속 보정까지 실무 단계별로 다루며, 중급 수준의 마케터가 기존 캠페인 자산을 빠르게 보강할 수 있도록 구성했습니다. 실제 브랜드 케이스를 활용한 실습을 통해 학습 직후 시안 제작 시간을 의미 있게 단축할 수 있고, 광고 시즌 리드 타임에 대응하는 자체 제작 역량을 확보할 수 있습니다."
+좋은 예 (LG생활건강 브랜드 마케터, 중급, AI 이미지 생성 활용 모듈 — 2~3줄):
+"본 모듈에서는 후·오휘·숨37° 등 자사 브랜드의 광고 이미지를 AI 도구로 제작하는 워크플로우를 다룹니다. 브랜드 톤을 유지하는 프롬프트 설계부터 시안 변형까지 실습하여, 캠페인 자산을 빠르게 보강하는 역량을 확보합니다."
 
 나쁜 예 (불릿·이모지·과장):
 "🔥 이 모듈에서는 AI 도구를 활용한 혁신적 워크플로우를 배웁니다!
@@ -164,7 +165,7 @@ JSON 출력:
 - 산문에 불릿(-, •, 1. 등)이 한 줄이라도 있는가 → 재작성
 - "혁신적", "최고의", "압도적" 같은 과장 표현이 있는가 → 제거
 - 회사명만 접두 붙인 일반론(예: "LG생활건강의 마케팅을 학습합니다")인가 → 구체적 브랜드·산출물로 교체
-- 길이가 3줄 이하이거나 9줄 이상인가 → 5~7줄로 조정
+- 길이가 1줄이거나 4줄 이상인가 → 2~3줄(약 90~140자)로 조정
 - 이중 따옴표(")가 있는가 → 홑따옴표·꺾쇠로 교체
 
 [재생성 의견 반영 — regenerationFeedback이 있을 때만]
@@ -218,7 +219,8 @@ LD가 결과를 보고 재생성 시 의견(자유 텍스트)을 함께 보냈�
 - 불릿 개수 변경
 - customizedContent 또는 proseDescription 문자열 내부에 이중 따옴표(") 사용 (홑따옴표 ' 또는 꺾쇠 「」 로 교체)
 - proseDescription에 불릿(-, •, 숫자 매김)·이모지·과장 표현 포함
-- proseDescription이 5줄 미만이거나 8줄 초과
+- proseDescription이 4줄 이상 또는 약 140자 초과 (목표 2~3줄 — 길면 핵심만 남기고 압축)
+- customizedContent 불릿이 명사구가 아닌 서술형 문장으로 길어짐 (원본 대비 길이 증가)
 - proseDescription 누락 (모든 모듈에 반드시 작성)`;
 
 function buildFeedbackBlock(regenerationFeedback) {
@@ -269,7 +271,7 @@ ${moduleBlocks}
     {
       "id": "모듈 ID",
       "customizedContent": "재작성된 학습 내용 (원본 불릿 개수 동일 유지)",
-      "proseDescription": "모듈별 LD 설명 산문체 5~7줄 (불릿·이모지·과장 표현 금지. 시스템 프롬프트의 작성 규칙 엄격 준수)"
+      "proseDescription": "모듈별 LD 설명 산문체 2~3줄 (약 90~140자, 불릿·이모지·과장 표현 금지. 시스템 프롬프트의 작성 규칙 엄격 준수)"
     }
   ]
 }
@@ -326,18 +328,21 @@ function runDetectors(parsedModules, originalModules, company) {
     const ml = detectMultilingualErrors(allText);
     const hall = detectHallucinationPatterns(allText, company);
     const bulletMismatch = newCount !== originalCount;
-    const proseMissing = !m.proseDescription || m.proseDescription.trim().length < 50;
+    const proseMissing = !m.proseDescription || m.proseDescription.trim().length < 40;
+    // 목표 2~3줄(~140자). 180자 초과면 모델이 길이 규칙을 무시한 것으로 보고 로그에 기록.
+    const proseTooLong = m.proseDescription ? m.proseDescription.trim().length > 180 : false;
     const proseHasBullet = m.proseDescription
       ? /(^|\n)\s*[-•▪◦·]/.test(m.proseDescription) || /(^|\n)\s*\d+[.)]\s/.test(m.proseDescription)
       : false;
 
-    if (ml.length || hall.length || bulletMismatch || proseMissing || proseHasBullet) {
+    if (ml.length || hall.length || bulletMismatch || proseMissing || proseTooLong || proseHasBullet) {
       report.push({
         id: m.id,
         bulletMismatch: bulletMismatch ? `${originalCount}->${newCount}` : null,
         multilingual: ml.length ? ml : null,
         hallucination: hall.length ? hall : null,
         proseMissing: proseMissing || null,
+        proseTooLong: proseTooLong ? `${m.proseDescription.trim().length}자` : null,
         proseHasBullet: proseHasBullet || null,
       });
     }
@@ -420,7 +425,7 @@ function parseModelJson(text) {
 const client = new Anthropic();
 
 // 배포 버전 식별자 (Vercel 캐시 이슈 진단용)
-const APP_VERSION = 'v7-regeneration-feedback';
+const APP_VERSION = 'v8-concise-content';
 
 // ====================================================================
 // 핸들러

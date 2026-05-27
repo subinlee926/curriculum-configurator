@@ -14,6 +14,17 @@ const CUSTOMIZE_PHASES = [
 
 const LEVEL_OPTIONS = ['입문', '중급', '고급'];
 
+// 클립보드 복사용 TSV 셀 escape.
+// 셀 안에 줄바꿈·탭·따옴표가 있으면 큰따옴표로 감싸고 내부 따옴표는 두 번 반복.
+// 이렇게 해야 구글 시트·엑셀에 붙여넣을 때 불릿 줄바꿈이 한 셀 안에서 유지된다.
+function csvCell(text) {
+  const s = String(text ?? '');
+  if (/[\n\t"]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
 export default function Step6Customization({
   selectedTopic,
   selectedModules,
@@ -261,7 +272,7 @@ export default function Step6Customization({
             content = `${content}\n\n[LD 설명]\n${c.proseDescription}`;
           }
         }
-        return [r.순서, r.모듈명, content.replace(/\n/g, ' '), formatHours(r.시수), r.Tool, r.비고].join('\t');
+        return [r.순서, csvCell(r.모듈명), csvCell(content), formatHours(r.시수), csvCell(r.Tool), csvCell(r.비고)].join('\t');
       })
       .join('\n');
     const footer = `\n합계\t${baseRows.length}개 모듈\t\t${formatHours(totalHours)}\t\t`;
